@@ -6,7 +6,7 @@ import pickle
 
 random_sample_size = 128
 
-base_url = '/Users/rui.zhong/AudioSet'
+base_url = '/home/centos/audio-recognition/AudioSet'
 
 music_files_path = base_url + '/music'
 nonmusic_files_path = base_url + '/nonmusic'
@@ -16,6 +16,7 @@ def process_one_file(filename, is_music):
   mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = mfcc.transpose()
   print(filename)
+  # For some samples the length is insufficient, just ignore them
   if len(mfcc) < random_sample_size:
     return None
   if is_music:

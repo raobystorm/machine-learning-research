@@ -7,22 +7,20 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-learning_rate = 0.0001
+learning_rate = 0.001
 max_iter = 100000
-batch_size = 32
+batch_size = 64
 random_sample_size = 128
 
-data_file = '/home/centos/AudioSet/data.dat'
+data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
 
 def random_sample(data_batch):
   data_list = []
   label_list = []
   for data in data_batch:
     sample = random.sample(list(data[0]), random_sample_size)
-    sample = np.reshape(sample, [n_input])
-    label = np.reshape(data[1], [n_classes])
-    data_list.append(sample)
-    label_list.append(label)
+    data_list.append(np.reshape(sample, [n_input]))
+    label_list.append(np.reshape(data[1], [n_classes]))
   return data_list, label_list
 
 def get_batch(data, batch_size, iteration):

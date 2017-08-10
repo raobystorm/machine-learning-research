@@ -2,11 +2,11 @@ import csv
 import random
 import subprocess
 
-YOUTUBE_URL_PREFIX = 'http://youtu.be/'
-MUSIC_LABEL = '/m/04rlf'
-MUSIC_FILE_PATH = '/Users/rui.zhong/AudioSet/music/'
-NONMUSIC_FILE_PATH = '/Users/rui.zhong/AudioSet/nonmusic/'
-DATA_CSV_FILE = '/Users/rui.zhong/AudioSet/unbalanced_train_segments.csv'
+youtube_url_prefix = 'http://youtu.be/'
+music_label = '/m/04rlf'
+music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
+nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
+data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
 
 class SoundClip(object):
   def __init__(self, youtube_id, start_time, end_time, labels):
@@ -14,13 +14,13 @@ class SoundClip(object):
     self.start_time = start_time
     self.end_time = end_time
     self.labels = labels.split(',')
-    if MUSIC_LABEL in labels:
+    if music_label in labels:
       self.is_music = True
-      self.file_name = MUSIC_FILE_PATH + youtube_id + '.wav'
+      self.file_name = music_file_path + youtube_id + '.wav'
     else:
       self.is_music = False
-      self.file_name = NONMUSIC_FILE_PATH + youtube_id + '.wav'
-    self.url = YOUTUBE_URL_PREFIX + youtube_id
+      self.file_name = nonmusic_file_path + youtube_id + '.wav'
+    self.url = youtube_url_prefix + youtube_id
 
 def download_one_audio(sound_clip):
   try:
@@ -43,12 +43,12 @@ def download_one_audio(sound_clip):
     pass
 
 def download_audio_set():
-  with open(DATA_CSV_FILE, mode='r') as source:
+  with open(data_csv_file, mode='r') as source:
     reader = csv.reader(source)
     music_count = 0
     nonmusic_cound = 0
-    music_limit = 100
-    nonmusic_limit = 100
+    music_limit = 1500
+    nonmusic_limit = 1500
     clip_list = []
     for row in reader:
       clip = SoundClip(row[0], row[1], row[2], row[3])
