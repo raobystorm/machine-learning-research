@@ -9,7 +9,7 @@ n_input = 128 * 64
 n_classes = 2
 learning_rate = 0.001
 max_iter = 100000
-batch_size = 32
+batch_size = 64
 random_sample_size = 128
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
