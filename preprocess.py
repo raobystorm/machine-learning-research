@@ -19,7 +19,7 @@ def process_one_file(filename, is_music):
   #mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
-  
+  print(filename)
   # For some samples the length is insufficient, just ignore them
   if len(mfcc) < random_sample_size:
     return None
