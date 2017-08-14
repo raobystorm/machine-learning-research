@@ -18,7 +18,7 @@ def process_one_file(filename, is_music):
   y, sr = librosa.load(filename, sr=44100)
   mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = mfcc.transpose()
-  print(filename)
+  
   # For some samples the length is insufficient, just ignore them
   if len(mfcc) < random_sample_size:
     return None
@@ -30,7 +30,7 @@ def process_one_file(filename, is_music):
 def preprocess():
   processed_list = []
   count = 0
-  limit = 4900
+  limit = 1500
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
@@ -52,7 +52,7 @@ def persistance():
   processed_list = preprocess()
   random.shuffle(processed_list)
   print(len(processed_list))
-  with open(base_url + '/data.dat', 'wb') as fp:
+  with open(base_url + '/data.dat' + random.randint(10000, 99999), 'wb') as fp:
   #with open(base_url + '/eval_data.dat', 'wb') as fp:
     pickle.dump(processed_list, fp)
 
