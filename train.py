@@ -11,6 +11,9 @@ learning_rate = 0.0001
 max_iter = 100000
 batch_size = 32
 random_sample_size = 128
+isLoad = False
+
+model_save_path = '/home/centos/audio-recognition/AudioSet/mdoel.ckpt'
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
@@ -111,6 +114,8 @@ b_fc2 = bias_variable([n_classes])
 
 y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
+saver = tf.train.Saver()
+
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
 train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
@@ -120,14 +125,19 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
   data_ = load_data(data_file)
-  sess.run(tf.global_variables_initializer())
+  if isLoad:
+    saver.restore(sess, model_save_path)
+  else:
+    sess.run(tf.global_variables_initializer())
   for i in range(max_iter):
     train_batch = random_sample(get_batch(data_, batch_size, i))
     if i % 100 == 0:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
     train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
+    if i % 10000 == 0:
 
+  print('Model saved in %s' % saver.save(sess, model_save_path))
   test_data = load_data(eval_data_file)
   test_batch = random_sample(test_data)
   print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
