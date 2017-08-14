@@ -7,12 +7,13 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-learning_rate = 0.001
+learning_rate = 0.0001
 max_iter = 100000
-batch_size = 64
+batch_size = 32
 random_sample_size = 128
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
+eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 
 def random_sample(data_batch):
   data_list = []
@@ -126,3 +127,7 @@ with tf.Session() as sess:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
     train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
+
+  test_data = load_data(eval_data_file)
+  test_batch = random_sample(test_data)
+  print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))

@@ -8,8 +8,11 @@ random_sample_size = 128
 
 base_url = '/home/centos/audio-recognition/AudioSet'
 
-music_files_path = base_url + '/music'
-nonmusic_files_path = base_url + '/nonmusic'
+#music_files_path = base_url + '/music'
+#nonmusic_files_path = base_url + '/nonmusic'
+
+music_files_path = base_url + '/eval_music'
+nonmusic_files_path = base_url + '/eval_nonmusic'
 
 def process_one_file(filename, is_music):
   y, sr = librosa.load(filename, sr=44100)
@@ -49,7 +52,8 @@ def persistance():
   processed_list = preprocess()
   random.shuffle(processed_list)
   print(len(processed_list))
-  with open(base_url + '/data.dat', 'wb') as fp:
+  #with open(base_url + '/data.dat', 'wb') as fp:
+  with open(base_url + '/eval_data.dat', 'wb') as fp:
     pickle.dump(processed_list, fp)
 
 persistance()
