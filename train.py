@@ -136,6 +136,9 @@ with tf.Session() as sess:
       print("step %d, training accuracy %g"%(i, train_accuacy))
     train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
     if i % 10000 == 0:
+      test_data = load_data(eval_data_file)
+      test_batch = random_sample(test_data)
+      print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
 
   print('Model saved in %s' % saver.save(sess, model_save_path))
   test_data = load_data(eval_data_file)
