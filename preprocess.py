@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import random
-import librosa
 import pickle
+from datetime import datetime
 
 random_sample_size = 128
 
@@ -15,8 +15,9 @@ nonmusic_files_path = base_url + '/nonmusic'
 #nonmusic_files_path = base_url + '/eval_nonmusic'
 
 def process_one_file(filename, is_music):
+  import librosa
   y, sr = librosa.load(filename, sr=44100)
-  #mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+  mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
   print(filename)
@@ -53,7 +54,7 @@ def persistance():
   processed_list = preprocess()
   random.shuffle(processed_list)
   print(len(processed_list))
-  with open(base_url + '/data.dat' + random.randint(10000, 99999), 'wb') as fp:
+  with open(base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
   #with open(base_url + '/eval_data.dat', 'wb') as fp:
     pickle.dump(processed_list, fp)
 
