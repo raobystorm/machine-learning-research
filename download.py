@@ -35,6 +35,7 @@ def download_one_audio(sound_clip):
     download_cmd = ['ffmpeg',
              '-ss', sound_clip.start_time,
              '-i', download_str[0],
+             '-n',
              '-f', 'wav', 
              '-ar', '44100',
              '-ac', '2',
@@ -50,9 +51,9 @@ def download_audio_set():
     reader = csv.reader(source)
     music_count = 0
     nonmusic_cound = 0
-    music_limit = 100000
+    music_limit = 10000
     #music_limit = 100
-    nonmusic_limit = 100000
+    nonmusic_limit = 10000
     #nonmusic_limit = 400
     clip_list = []
     for row in reader:
