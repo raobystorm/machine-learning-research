@@ -16,7 +16,8 @@ nonmusic_files_path = base_url + '/nonmusic'
 
 def process_one_file(filename, is_music):
   y, sr = librosa.load(filename, sr=44100)
-  mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+  #mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+  mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
   
   # For some samples the length is insufficient, just ignore them
@@ -30,7 +31,7 @@ def process_one_file(filename, is_music):
 def preprocess():
   processed_list = []
   count = 0
-  limit = 1500
+  limit = 5000
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
