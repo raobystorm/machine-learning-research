@@ -20,9 +20,9 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 eval_music_files_path = base_url + '/eval_music'
 eval_nonmusic_files_path = base_url + '/eval_nonmusic'
 
-def process_one_file(filename, is_music):
-  y, sr = librosa.load(filename, sr=44100)
-  #mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+def process_one_file(lib, filename, is_music):
+  y, sr = lib.load(filename, sr=44100)
+  #mfcc = lib.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
   print(filename)
