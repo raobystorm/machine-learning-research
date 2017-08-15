@@ -1,4 +1,5 @@
 import os
+import importlib
 import numpy as np
 import random
 import pickle
@@ -18,10 +19,9 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 eval_music_files_path = base_url + '/eval_music'
 eval_nonmusic_files_path = base_url + '/eval_nonmusic'
 
-def process_one_file(filename, is_music):
-  import librosa
-  y, sr = librosa.load(filename, sr=44100)
-  mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+def process_one_file(lib, filename, is_music):
+  y, sr = lib.load(filename, sr=44100)
+  mfcc = lib.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   #mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
   print(filename)
@@ -33,14 +33,14 @@ def process_one_file(filename, is_music):
   else:
     return [mfcc, [0, 1]]
 
-def preprocess():
+def preprocess(lib):
   processed_list = []
   count = 0
   limit = 1500
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
-    processed = process_one_file(music_files_path + '/' + filename, True)
+    processed = process_one_file(lib, music_files_path + '/' + filename, True)
     os.rename(music_files_path + '/' + filename, processed_music_files_path+ '/' + filename)
     if processed is not None:
       processed_list.append(processed)
@@ -49,7 +49,7 @@ def preprocess():
   for filename in os.listdir(nonmusic_files_path):
     if count >= limit:
       break
-    processed = process_one_file(nonmusic_files_path + '/' + filename, False)
+    processed = process_one_file(lib, nonmusic_files_path + '/' + filename, False)
     os.rename(nonmusic_files_path + '/' + filename, processed_nonmusic_files_path+ '/' + filename)
     if processed is not None:
       processed_list.append(processed)
@@ -57,7 +57,10 @@ def preprocess():
   return processed_list
 
 def persistance():
-  processed_list = preprocess()
+  import librosa
+  librosa.cache.clear()
+  librosa = importlib.reload(librosa)
+  processed_list = preprocess(librosa)
   random.shuffle(processed_list)
   print(len(processed_list))
   with open(base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
