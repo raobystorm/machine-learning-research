@@ -11,8 +11,11 @@ base_url = '/home/centos/audio-recognition/AudioSet'
 music_files_path = base_url + '/music'
 nonmusic_files_path = base_url + '/nonmusic'
 
-#music_files_path = base_url + '/eval_music'
-#nonmusic_files_path = base_url + '/eval_nonmusic'
+processed_music_files_path = base_url + '/processed/music'
+processed_nonmusic_files_path = base_url + '/processed/nonmusic'
+
+eval_music_files_path = base_url + '/eval_music'
+eval_nonmusic_files_path = base_url + '/eval_nonmusic'
 
 def process_one_file(filename, is_music):
   import librosa
@@ -32,11 +35,12 @@ def process_one_file(filename, is_music):
 def preprocess():
   processed_list = []
   count = 0
-  limit = 5000
+  limit = 1500
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
     processed = process_one_file(music_files_path + '/' + filename, True)
+    os.rename(music_files_path + '/' + filename, processed_music_files_path+ '/' + filename)
     if processed is not None:
       processed_list.append(processed)
       count = count + 1
@@ -45,6 +49,7 @@ def preprocess():
     if count >= limit:
       break
     processed = process_one_file(nonmusic_files_path + '/' + filename, False)
+    os.rename(nonmusic_files_path + '/' + filename, processed_nonmusic_files_path+ '/' + filename)
     if processed is not None:
       processed_list.append(processed)
       count = count + 1
