@@ -2,6 +2,7 @@ import os
 import importlib
 import numpy as np
 import random
+import importlib
 import pickle
 import gc
 from datetime import datetime
@@ -19,10 +20,10 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 eval_music_files_path = base_url + '/eval_music'
 eval_nonmusic_files_path = base_url + '/eval_nonmusic'
 
-def process_one_file(lib, filename, is_music):
-  y, sr = lib.load(filename, sr=44100)
-  mfcc = lib.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-  #mfcc = np.random.rand(64, 1001)
+def process_one_file(filename, is_music):
+  y, sr = librosa.load(filename, sr=44100)
+  #mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+  mfcc = np.random.rand(64, 1001)
   mfcc = mfcc.transpose()
   print(filename)
   # For some samples the length is insufficient, just ignore them
@@ -36,7 +37,7 @@ def process_one_file(lib, filename, is_music):
 def preprocess(lib):
   processed_list = []
   count = 0
-  limit = 1500
+  limit = 5000
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
@@ -66,7 +67,6 @@ def persistance():
   with open(base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
   #with open(base_url + '/eval_data.dat', 'wb') as fp:
     pickle.dump(processed_list, fp)
-    del processed_list
-    gc.collect()
+    librosa.cache.clear()
 
 persistance()
