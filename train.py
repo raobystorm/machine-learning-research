@@ -114,15 +114,14 @@ h_pool2_flat = tf.reshape(h_pool2, [-1, 11 * 4 * 96])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 # dropout
-#keep_prob = tf.placeholder(tf.float32)
-#h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+keep_prob = tf.placeholder(tf.float32)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 # output layer: softmax
 W_fc2 = weight_varible([480, n_classes])
 b_fc2 = bias_variable([n_classes])
 
-#y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
-y_conv = tf.matmul(h_fc1, W_fc2) + b_fc2
+y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
 saver = tf.train.Saver()
 
@@ -144,7 +143,7 @@ with tf.Session() as sess:
     if i % 100 == 0:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
-    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
+    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
     if i % 10000 == 0:
       test_data = load_data(eval_data_file)
       test_batch = random_sample(test_data)
