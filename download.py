@@ -51,7 +51,7 @@ def download_audio_set():
     reader = csv.reader(source)
     music_count = 0
     nonmusic_cound = 0
-    music_limit = 0
+    music_limit = 8000
     #music_limit = 100
     nonmusic_limit = 8000
     #nonmusic_limit = 400
@@ -65,9 +65,9 @@ def download_audio_set():
     for clip in clip_list:
       if len(music_list) == music_limit and len(nonmusic_list) == nonmusic_limit:
         break
-      if clip.is_music and len(music_list) <= music_limit:
+      if clip.is_music and len(music_list) < music_limit:
         music_list.append(clip)
-      elif len(nonmusic_list) <= nonmusic_limit:
+      elif len(nonmusic_list) < nonmusic_limit:
         nonmusic_list.append(clip)
     
     for music in music_list:
