@@ -134,6 +134,8 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
   data_ = load_data(data_file)
+  test_data = load_data(eval_data_file)
+
   if isLoad:
     saver.restore(sess, model_save_path)
   else:
@@ -144,12 +146,11 @@ with tf.Session() as sess:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
     train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
-    if i % 10000 == 0:
-      test_data = load_data(eval_data_file)
+    if i % 5000 == 0:
       test_batch = random_sample(test_data)
       print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
+      print('Model saved in %s' % saver.save(sess, model_save_path))
 
-  print('Model saved in %s' % saver.save(sess, model_save_path))
-  test_data = load_data(eval_data_file)
   test_batch = random_sample(test_data)
   print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
+  print('Model saved in %s' % saver.save(sess, model_save_path))
