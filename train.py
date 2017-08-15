@@ -13,7 +13,7 @@ batch_size = 64
 random_sample_size = 128
 isLoad = False
 
-model_save_path = '/home/centos/audio-recognition/AudioSet/mdoel.ckpt'
+model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
@@ -74,43 +74,43 @@ W_conv1 = weight_varible([5, 5, 1, 48])
 b_conv1 = bias_variable([48])
 
 # conv layer-1
-x_image = tf.reshape(x, [-1, 128, 64, 1])
+x_image = tf.reshape(x, [-1, 128, 48, 1])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool(h_conv1, 4)
+h_pool1 = max_pool(h_conv1, 3)
 
 # conv layer-2
-#W_conv2 = weight_varible([3, 3, 48, 96])
-#b_conv2 = bias_variable([96])
-
-#h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-#h_pool2 = max_pool(h_conv2, 2)
-
-W_conv2 = weight_varible([4, 4, 48, 96])
+W_conv2 = weight_varible([3, 3, 48, 96])
 b_conv2 = bias_variable([96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool(h_conv2, 3)
+h_pool2 = max_pool(h_conv2, 2)
+
+#W_conv2 = weight_varible([4, 4, 48, 96])
+#b_conv2 = bias_variable([96])
+
+#h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+#h_pool2 = max_pool(h_conv2, 3)
 
 # conv layer-3
-#W_conv3 = weight_varible([3, 3, 96, 160])
-#b_conv3 = bias_variable([160])
+W_conv3 = weight_varible([3, 3, 96, 128])
+b_conv3 = bias_variable([128])
 
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool(h_conv3, 2)
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+h_pool3 = max_pool(h_conv3, 2)
 
 # conv layer-4
-#W_conv4 = weight_varible([3, 3, 160, 256])
-#b_conv4 = bias_variable([256])
+W_conv4 = weight_varible([3, 3, 128, 128])
+b_conv4 = bias_variable([128])
 
-#h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-#h_pool4 = max_pool(h_conv4, 2)
+h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
+h_pool4 = max_pool(h_conv4, 2)
 
 # full connection
-W_fc1 = weight_varible([11 * 6 * 96, 480])
-b_fc1 = bias_variable([480])
+W_fc1 = weight_varible([6 * 2 * 128, 512])
+b_fc1 = bias_variable([512])
 
-h_pool2_flat = tf.reshape(h_pool2, [-1, 11 * 6 * 96])
+h_pool2_flat = tf.reshape(h_pool2, [-1, 6 * 2 * 128])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 # dropout
@@ -118,7 +118,7 @@ keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 # output layer: softmax
-W_fc2 = weight_varible([480, n_classes])
+W_fc2 = weight_varible([512, n_classes])
 b_fc2 = bias_variable([n_classes])
 
 y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
@@ -142,10 +142,10 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
   for i in range(max_iter):
     train_batch = random_sample(get_batch(data_, batch_size, i))
-    if i % 100 == 0:
+    if i % 800 == 0:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
-    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
+    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
     if i % 5000 == 0:
       test_batch = random_sample(test_data)
       print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
