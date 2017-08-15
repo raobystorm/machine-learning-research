@@ -15,7 +15,7 @@ isLoad = False
 
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.dat'
+data_file = '/home/centos/audio-recognition/AudioSet/data.1502787494'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 
 def random_sample(data_batch):
@@ -110,8 +110,8 @@ h_pool4 = max_pool(h_conv4, 2)
 W_fc1 = weight_varible([6 * 2 * 128, 512])
 b_fc1 = bias_variable([512])
 
-h_pool2_flat = tf.reshape(h_pool2, [-1, 6 * 2 * 128])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+h_pool4_flat = tf.reshape(h_pool4, [-1, 6 * 2 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 # dropout
 keep_prob = tf.placeholder(tf.float32)
