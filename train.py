@@ -77,7 +77,7 @@ b_conv1 = bias_variable([48])
 x_image = tf.reshape(x, [-1, 128, 48, 1])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool(h_conv1, 3)
+h_pool1 = max_pool(h_conv1, 4)
 
 # conv layer-2
 #W_conv2 = weight_varible([3, 3, 48, 96])
@@ -86,7 +86,7 @@ h_pool1 = max_pool(h_conv1, 3)
 #h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 #h_pool2 = max_pool(h_conv2, 2)
 
-W_conv2 = weight_varible([4, 4, 64, 96])
+W_conv2 = weight_varible([4, 4, 48, 96])
 b_conv2 = bias_variable([96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
@@ -107,10 +107,10 @@ h_pool2 = max_pool(h_conv2, 3)
 #h_pool4 = max_pool(h_conv4, 2)
 
 # full connection
-W_fc1 = weight_varible([15 * 8 * 96, 1024])
-b_fc1 = bias_variable([1024])
+W_fc1 = weight_varible([11 * 4 * 96, 480])
+b_fc1 = bias_variable([480])
 
-h_pool2_flat = tf.reshape(h_pool2, [-1, 15 * 8 * 96])
+h_pool2_flat = tf.reshape(h_pool2, [-1, 11 * 4 * 96])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 # dropout
@@ -118,7 +118,7 @@ h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 #h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 # output layer: softmax
-W_fc2 = weight_varible([1024, n_classes])
+W_fc2 = weight_varible([480, n_classes])
 b_fc2 = bias_variable([n_classes])
 
 #y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
