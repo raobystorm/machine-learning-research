@@ -2,6 +2,7 @@ import os
 import numpy as np
 import random
 import pickle
+import gc
 from datetime import datetime
 
 random_sample_size = 128
@@ -62,5 +63,7 @@ def persistance():
   with open(base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
   #with open(base_url + '/eval_data.dat', 'wb') as fp:
     pickle.dump(processed_list, fp)
+    del processed_list
+    gc.collect()
 
 persistance()
