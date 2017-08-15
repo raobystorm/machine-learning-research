@@ -20,7 +20,7 @@ eval_nonmusic_files_path = base_url + '/eval_nonmusic'
 
 def process_one_file(filename, is_music):
   y, sr = librosa.load(filename, sr=44100)
-  if not y:
+  if len(y) is 0:
     return None
   mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
   mfcc = mfcc.transpose()
