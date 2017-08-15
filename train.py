@@ -9,7 +9,7 @@ n_input = 128 * 64
 n_classes = 2
 learning_rate = 0.0001
 max_iter = 100000
-batch_size = 32
+batch_size = 64
 random_sample_size = 128
 isLoad = False
 
