@@ -7,7 +7,7 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-learning_rate = 0.0001
+learning_rate = 3e-5
 max_iter = 100000
 batch_size = 64
 random_sample_size = 128
@@ -67,9 +67,6 @@ def max_pool(x, k):
   return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
 
 # paras
-#W_conv1 = weight_varible([4, 4, 1, 48])
-#b_conv1 = bias_variable([48])
-
 W_conv1 = weight_varible([5, 5, 1, 48])
 b_conv1 = bias_variable([48])
 
@@ -86,12 +83,6 @@ b_conv2 = bias_variable([96])
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool(h_conv2, 2)
 
-#W_conv2 = weight_varible([4, 4, 48, 96])
-#b_conv2 = bias_variable([96])
-
-#h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-#h_pool2 = max_pool(h_conv2, 3)
-
 # conv layer-3
 W_conv3 = weight_varible([3, 3, 96, 128])
 b_conv3 = bias_variable([128])
@@ -100,15 +91,15 @@ h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 h_pool3 = max_pool(h_conv3, 2)
 
 # conv layer-4
-W_conv4 = weight_varible([3, 3, 128, 128])
-b_conv4 = bias_variable([128])
+W_conv4 = weight_varible([3, 3, 128, 64])
+b_conv4 = bias_variable([64])
 
 h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
 h_pool4 = max_pool(h_conv4, 2)
 
 # full connection
-W_fc1 = weight_varible([6 * 3 * 128, 512])
-b_fc1 = bias_variable([512])
+W_fc1 = weight_varible([6 * 3 * 64, 256])
+b_fc1 = bias_variable([256])
 
 h_pool4_flat = tf.reshape(h_pool4, [-1, 6 * 3 * 128])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
@@ -118,7 +109,7 @@ keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 # output layer: softmax
-W_fc2 = weight_varible([512, n_classes])
+W_fc2 = weight_varible([256, n_classes])
 b_fc2 = bias_variable([n_classes])
 
 y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
