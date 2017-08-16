@@ -101,7 +101,7 @@ h_pool4 = max_pool(h_conv4, 2)
 W_fc1 = weight_varible([6 * 3 * 64, 256])
 b_fc1 = bias_variable([256])
 
-h_pool4_flat = tf.reshape(h_pool4, [-1, 6 * 3 * 128])
+h_pool4_flat = tf.reshape(h_pool4, [-1, 6 * 3 * 64])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 # dropout
