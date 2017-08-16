@@ -67,19 +67,20 @@ def max_pool(x, k):
   return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
 
 # paras
-W_conv1 = weight_varible([7, 7, 1, 32])
+W_conv1 = weight_varible([5, 5, 1, 32])
 b_conv1 = bias_variable([32])
 
 # conv layer-1
 x_image = tf.reshape(x, [-1, 128, 64, 1])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
+h_pool1 = max_pool(h_conv1, 3)
 
 # conv layer-2
-W_conv2 = weight_varible([5, 5, 32, 64])
+W_conv2 = weight_varible([3, 3, 32, 64])
 b_conv2 = bias_variable([64])
 
-h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
+h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool(h_conv2, 2)
 
 # conv layer-3
@@ -90,27 +91,21 @@ h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 h_pool3 = max_pool(h_conv3, 2)
 
 # conv layer-4
-W_conv4 = weight_varible([3, 3, 96, 96])
-b_conv4 = bias_variable([96])
+W_conv4 = weight_varible([3, 3, 96, 64])
+b_conv4 = bias_variable([64])
 
-h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
-
-# conv layer-5
-W_conv5 = weight_varible([3, 3, 96, 64])
-b_conv5 = bias_variable([64])
-
-h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
-h_pool5 = max_pool(h_conv5, 2)
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+h_pool4 = max_pool(h_conv4, 2)
 
 # fully-connect-1
-W_fc1 = weight_varible([16 * 8 * 64, 1024])
-b_fc1 = bias_variable([1024])
+W_fc1 = weight_varible([11 * 6 * 64, 512])
+b_fc1 = bias_variable([512])
 
-h_pool5_flat = tf.reshape(h_pool5, [-1, 16 * 8 * 64])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
+h_pool4_flat = tf.reshape(h_pool4, [-1, 11 * 6 * 64])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 # fully-connect-2
-W_fc2 = weight_varible([1024, 128])
+W_fc2 = weight_varible([512, 128])
 b_fc2 = bias_variable([128])
 
 h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
