@@ -36,7 +36,7 @@ def process_one_file(filename, is_music):
 def preprocess():
   processed_list = []
   count = 0
-  limit = 5000
+  limit = 15000
   for filename in os.listdir(music_files_path):
     if count >= limit:
       break
