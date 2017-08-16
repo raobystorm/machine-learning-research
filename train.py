@@ -7,9 +7,9 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-learning_rate = 3e-5
+learning_rate = 1e-5
 max_iter = 100000
-batch_size = 64
+batch_size = 32
 random_sample_size = 128
 isLoad = False
 
