@@ -66,18 +66,18 @@ def conv2d(x, W):
 def max_pool(x, k):
   return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
 
-# paras
-W_conv1 = weight_varible([5, 5, 1, 32])
-b_conv1 = bias_variable([32])
-
-# conv layer-1
+# Reshape input
 x_image = tf.reshape(x, [-1, 128, 64, 1])
 
+# conv layer-1
+W_conv1 = weight_varible([5, 5, 1, 48])
+b_conv1 = bias_variable([48])
+
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool(h_conv1, 3)
+h_pool1 = max_pool(h_conv1, 2)
 
 # conv layer-2
-W_conv2 = weight_varible([3, 3, 32, 64])
+W_conv2 = weight_varible([3, 3, 48, 64])
 b_conv2 = bias_variable([64])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
@@ -91,34 +91,35 @@ h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 h_pool3 = max_pool(h_conv3, 2)
 
 # conv layer-4
-W_conv4 = weight_varible([3, 3, 96, 64])
-b_conv4 = bias_variable([64])
+W_conv4 = weight_varible([3, 3, 96, 96])
+b_conv4 = bias_variable([96])
 
-h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
 h_pool4 = max_pool(h_conv4, 2)
 
+# conv layer-5
+W_conv5 = weight_varible([3, 3, 96, 64])
+b_conv5 = bias_variable([64])
+
+h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
+h_pool5 = max_pool(h_conv5, 2)
+
 # fully-connect-1
-W_fc1 = weight_varible([11 * 6 * 64, 512])
-b_fc1 = bias_variable([512])
+W_fc1 = weight_varible([4 * 2 * 64, 128])
+b_fc1 = bias_variable([128])
 
-h_pool4_flat = tf.reshape(h_pool4, [-1, 11 * 6 * 64])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
-
-# fully-connect-2
-W_fc2 = weight_varible([512, 128])
-b_fc2 = bias_variable([128])
-
-h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
+h_pool5_flat = tf.reshape(h_pool5, [-1, 4 * 2 * 64])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
 
 # dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
-h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
 # output layer: softmax
-W_fc3 = weight_varible([128, n_classes])
-b_fc3 = bias_variable([n_classes])
+W_fc2 = weight_varible([128, n_classes])
+b_fc2 = bias_variable([n_classes])
 
-y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
+y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
 saver = tf.train.Saver()
 
