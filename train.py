@@ -115,9 +115,9 @@ b_fc2 = bias_variable([512])
 
 h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
 
-# dropout
-keep_prob = tf.placeholder(tf.float32)
-h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
+# dropout-1
+keep_prob_1 = tf.placeholder(tf.float32)
+h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # fully-connect-3
 W_fc3 = weight_varible([512, 128])
@@ -125,9 +125,9 @@ b_fc3 = bias_variable([128])
 
 h_fc3 = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
 
-# dropout
-keep_prob = tf.placeholder(tf.float32)
-h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob)
+# dropout-2
+keep_prob_2 = tf.placeholder(tf.float32)
+h_fc3_drop = tf.nn.dropout(h_fc3, keep_prob_2)
 
 # output layer: softmax
 W_fc4 = weight_varible([128, n_classes])
@@ -155,14 +155,14 @@ with tf.Session() as sess:
   for i in range(max_iter):
     train_batch = random_sample(get_batch(data_, batch_size, i))
     if i % 800 == 0:
-      train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 1.0})
+      train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0, keep_prob_2: 1.0})
       print("step %d, training accuracy %g"%(i, train_accuacy))
-    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob: 0.5})
+    train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5, keep_prob_2: 0.5})
     if i % 5000 == 0:
       test_batch = random_sample(test_data)
-      print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
+      print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0, keep_prob_2: 1.0}))
       print('Model saved in %s' % saver.save(sess, model_save_path))
 
   test_batch = random_sample(test_data)
-  print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob: 1.0}))
+  print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0, keep_prob_2: 1.0}))
   print('Model saved in %s' % saver.save(sess, model_save_path))
