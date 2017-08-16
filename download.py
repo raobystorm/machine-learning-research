@@ -8,7 +8,7 @@ music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
 #music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
 nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
 #nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
-data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
+data_csv_file = '/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv'
 #data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
 
 class SoundClip(object):
@@ -36,7 +36,7 @@ def download_one_audio(sound_clip):
              '-ss', sound_clip.start_time,
              '-i', download_str[0],
              '-n',
-             '-f', 'wav', 
+             '-f', 'wav',
              '-ar', '44100',
              '-ac', '2',
              '-t', '10',
@@ -51,9 +51,9 @@ def download_audio_set():
     reader = csv.reader(source)
     music_count = 0
     nonmusic_cound = 0
-    music_limit = 8000
+    music_limit = 6000
     #music_limit = 100
-    nonmusic_limit = 8000
+    nonmusic_limit = 14000
     #nonmusic_limit = 400
     clip_list = []
     for row in reader:
@@ -69,7 +69,7 @@ def download_audio_set():
         music_list.append(clip)
       elif len(nonmusic_list) < nonmusic_limit:
         nonmusic_list.append(clip)
-    
+
     for music in music_list:
       download_one_audio(music)
     for nonmusic in nonmusic_list:
