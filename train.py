@@ -8,7 +8,7 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-max_iter = 100000
+max_iter = 300000
 batch_size = 32
 random_sample_size = 128
 isLoad = False
@@ -127,8 +127,8 @@ saver = tf.train.Saver()
 
 #learning_rate
 global_step = tf.Variable(0, trainable=False)
-boundaries = [40000, 80000]
-values = [3e-5, 1e-5, 3e-6]
+boundaries = [30000, 80000, 150000]
+values = [1e-4, 5e-5, 1e-5, 3e-5]
 learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
 
 # model training
