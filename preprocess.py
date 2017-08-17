@@ -1,7 +1,6 @@
 import os
 import librosa
 import unittest
-import random
 import pickle
 from datetime import datetime
 
@@ -61,7 +60,6 @@ class AudioSetPreprocess(object):
     def persistance(self):
         librosa.cache.clear()
         processed_list = self.preprocess()
-        random.shuffle(processed_list)
         print(len(processed_list))
         with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
             #with open(base_url + '/eval_data.dat', 'wb') as fp:
