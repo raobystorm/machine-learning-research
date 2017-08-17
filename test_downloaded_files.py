@@ -1,7 +1,7 @@
 import csv
 import os
 
-with open('/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv', mode='r') as fp:
+with open('/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv', mode='r') as fp:
     reader = csv.reader(fp)
     str_list = []
     for row in reader:
