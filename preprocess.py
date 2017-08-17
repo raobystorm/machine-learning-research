@@ -18,7 +18,7 @@ class AudioSetPreprocess(object):
         self.eval_music_files_path = self.base_url + '/eval_music'
         self.eval_nonmusic_files_path = self.base_url + '/eval_nonmusic'
 
-    def process_one_file(filename, class_list):
+    def process_one_file(self, filename, class_list):
         y, sr = librosa.load(filename, sr=44100)
         if len(y) is 0:
             return None
@@ -30,13 +30,13 @@ class AudioSetPreprocess(object):
             return None
         return [mfcc, class_list]
 
-    def preprocess_batch(files_dir, limit, class_list, processed_dir):
+    def preprocess_batch(self, files_dir, limit, class_list, processed_dir):
         processed_list = []
         count = 0
         for filename in os.listdir(files_dir):
             if count >= limit:
                 break
-            processed = process_one_file(filename, class_list)
+            processed = self.process_one_file(files_dir + '/' + filename, class_list)
             os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
             if processed is not None:
                 processed_list.append(processed)
@@ -44,33 +44,33 @@ class AudioSetPreprocess(object):
 
         return processed_list
 
-    def preprocess():
+    def preprocess(self):
         processed_list = []
-        processed_list.extend(preprocess_batch(
+        processed_list.extend(self.preprocess_batch(
           files_dir=self.music_files_path,
           limit=self.music_files_limit,
           class_list=[1., 0.],
           processed_dir=self.processed_music_files_path))
-        processed_list.extend(preprocess_batch(
+        processed_list.extend(self.preprocess_batch(
           files_dir=self.nonmusic_files_path,
           limit=self.nonmusic_files_limit,
           class_list=[0., 1.],
           processed_dir=self.processed_nonmusic_files_path))
         return processed_list
 
-    def persistance():
+    def persistance(self):
         librosa.cache.clear()
-        processed_list = preprocess()
+        processed_list = self.preprocess()
         random.shuffle(processed_list)
         print(len(processed_list))
-        with open(base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
+        with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
             #with open(base_url + '/eval_data.dat', 'wb') as fp:
             pickle.dump(processed_list, fp)
             librosa.cache.clear()
 
 class PreprocessTest(unittest.TestCase):
 
-    def __init__():
+    def __init__(self):
         self.preprocess = AudioSetPreprocess()
         self.test_files_dir = '/Users/rui.zhong/audio-recognition/test'
         self.expected_list = pickle.load(open(self.test_files_dir + '/preprocess.result', 'rb'))
