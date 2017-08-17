@@ -9,10 +9,8 @@ with open('/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv',
 
     for filename in os.listdir('/home/centos/audio-recognition/AudioSet/music'):
         filename = filename.rsplit('.', 1)[0]
-        print(filename)
         assert '/m/04rlf' in str(list(filter(lambda x: filename in x, str_list))[0])
 
     for filename in os.listdir('/home/centos/audio-recognition/AudioSet/nonmusic'):
         filename = filename.rsplit('.', 1)[0]
-        print(filename)
         assert '/m/04rlf' not in str(list(filter(lambda x: filename in x, str_list))[0])
