@@ -16,8 +16,8 @@ class SoundClip(object):
     self.youtube_id = youtube_id
     self.start_time = start_time
     self.end_time = end_time
-    self.labels = labels.split(',')
-    if music_label in labels:
+    self.labels = list(map(lambda x: x.replace('\"','').strip(), labels))
+    if music_label in self.labels:
       self.is_music = True
       self.file_name = music_file_path + youtube_id + '.wav'
     else:
@@ -57,7 +57,7 @@ def download_audio_set():
     #nonmusic_limit = 400
     clip_list = []
     for row in reader:
-      clip = SoundClip(row[0], row[1], row[2], row[3])
+      clip = SoundClip(row[0], row[1], row[2], row[3:])
       clip_list.append(clip)
     random.shuffle(clip_list)
     music_list = []
