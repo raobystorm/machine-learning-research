@@ -150,7 +150,7 @@ with tf.Session() as sess:
     train_batch = random_sample(get_batch(data_, batch_size, i))
     if i % 800 == 0:
       train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
-      print("step %d, training accuracy %g, learning rate %g"%(i, train_accuacy, learning_rate))
+      print("step %d, training accuracy %g"%(i, train_accuacy))
     train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
     if i % 5000 == 0:
       test_batch = random_sample(test_data)
