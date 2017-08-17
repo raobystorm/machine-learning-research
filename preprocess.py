@@ -1,23 +1,22 @@
 import os
 import librosa
-import numpy as np
 import unittest
 import random
 import pickle
 from datetime import datetime
 
 class AudioSetPreprocess(object):
-    def __init__():
+    def __init__(self):
         self.random_sample_size = 128
         self.base_url = '/home/centos/audio-recognition/AudioSet'
-        self.music_files_path = base_url + '/music'
+        self.music_files_path = self.base_url + '/music'
         self.music_files_limit = 6000
-        self.nonmusic_files_path = base_url + '/nonmusic'
+        self.nonmusic_files_path = self.base_url + '/nonmusic'
         self.nonmusic_files_limit = 14000
-        self.processed_music_files_path = base_url + '/processed/music'
-        self.processed_nonmusic_files_path = base_url + '/processed/nonmusic'
-        self.eval_music_files_path = base_url + '/eval_music'
-        self.eval_nonmusic_files_path = base_url + '/eval_nonmusic'
+        self.processed_music_files_path = self.base_url + '/processed/music'
+        self.processed_nonmusic_files_path = self.base_url + '/processed/nonmusic'
+        self.eval_music_files_path = self.base_url + '/eval_music'
+        self.eval_nonmusic_files_path = self.base_url + '/eval_nonmusic'
 
     def process_one_file(filename, class_list):
         y, sr = librosa.load(filename, sr=44100)
@@ -37,11 +36,12 @@ class AudioSetPreprocess(object):
         for filename in os.listdir(files_dir):
             if count >= limit:
                 break
-        processed = process_one_file(filename, class_list)
-        os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
-        if processed is not None:
-            processed_list.append(processed)
-            count = count + 1
+            processed = process_one_file(filename, class_list)
+            os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
+            if processed is not None:
+                processed_list.append(processed)
+                count = count + 1
+
         return processed_list
 
     def preprocess():
