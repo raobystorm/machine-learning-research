@@ -6,19 +6,19 @@ base_url = '/home/centos/audio-recognition/AudioSet/'
 with open(base_url + 'balanced_train_segments.csv', mode='r') as fp:
     with open(base_url + 'eval_segments.csv', mode='r') as eval_fp:
 
-        reader = csv.reader(fp)
-        str_list = []
-        for row in reader:
-            str_list.append(row)
+        #reader = csv.reader(fp)
+        #str_list = []
+        #for row in reader:
+        #    str_list.append(row)
         eval_list = []
         reader = csv.reader(eval_fp)
         for row in reader:
             eval_list.append(eval_fp)
 
-        for filename in os.listdir(base_url + 'processed/music'):
+        for filename in os.listdir(base_url + 'eval_nonmusic'):
             filename = filename.rsplit('.', 1)[0]
             if list(filter(lambda x: filename in x, eval_list)):
-                os.rename(base_url + 'processed/music/' + filename + '.wav', base_url + 'eval_music/' + filename + '.wav')
+                os.rename(base_url + 'eval_nonmusic/' + filename + '.wav', base_url + '/' + filename + '.wav')
                 #os.rename('/Users/rui.zhong/audio-recognition/AudioSet/music/' + music + '.wav', '/Users/rui.zhong/audio-recognition/AudioSet/nonmusic/' + music+ '.wav')
 
         print('Finish')
