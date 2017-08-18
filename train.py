@@ -140,6 +140,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
     data_ = load_data(data_file)
+    random.shuffle(data_)
     test_data = load_data(eval_data_file)
 
     if isLoad:
