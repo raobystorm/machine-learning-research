@@ -17,7 +17,7 @@ with open(base_url + 'balanced_train_segments.csv', mode='r') as fp:
 
         for filename in os.listdir(base_url + 'eval_nonmusic'):
             filename = filename.rsplit('.', 1)[0]
-            if list(filter(lambda x: filename in x, eval_list)):
+            if '/m/04rlf' in str(list(filter(lambda x: nonmusic in x, eval_list))[0]):
                 os.rename(base_url + 'eval_nonmusic/' + filename + '.wav', base_url + '/' + filename + '.wav')
                 #os.rename('/Users/rui.zhong/audio-recognition/AudioSet/music/' + music + '.wav', '/Users/rui.zhong/audio-recognition/AudioSet/nonmusic/' + music+ '.wav')
 
