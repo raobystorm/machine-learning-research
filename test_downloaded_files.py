@@ -8,7 +8,7 @@ with open('/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv',
         for row in reader:
             str_list.append(row)
 
-        reader = cscv.reader(eval_fp)
+        reader = csv.reader(eval_fp)
         eval_list = []
         for row in reader:
             eval_list.append(row)
