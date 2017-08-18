@@ -15,7 +15,7 @@ isLoad = False
 
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.1502880153'
+data_file = '/home/centos/audio-recognition/AudioSet/data.1503022968'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 
 def random_sample(data_batch):
