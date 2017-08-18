@@ -17,7 +17,7 @@ class AudioSetPreprocess(object):
         self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
         self.nonmusic_files_limit = 14000
         #self.processed_music_files_path = self.base_url + '/processed/nonmusic'
-        self.processed_music_files_path = self.base_url + '/processed/eval_nonmusic'
+        self.processed_nonmusic_files_path = self.base_url + '/processed/eval_nonmusic'
 
     def process_one_file(self, filename, class_list):
         y, sr = librosa.load(filename, sr=44100)
