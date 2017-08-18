@@ -9,13 +9,15 @@ class AudioSetPreprocess(object):
         self.random_sample_size = 128
         self.base_url = '/home/centos/audio-recognition/AudioSet'
         #self.music_files_path = self.base_url + '/music'
-        self.music_files_path = self.base_url + '/processed/music'
+        self.music_files_path = self.base_url + '/eval_music'
+        #self.processed_music_files_path = self.base_url + '/processed/music'
+        self.processed_music_files_path = self.base_url + '/processed/eval_music'
         self.music_files_limit = 6000
         #self.nonmusic_files_path = self.base_url + '/nonmusic'
-        self.nonmusic_files_path = self.base_url + '/processed/nonmusic'
+        self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
         self.nonmusic_files_limit = 14000
-        self.eval_music_files_path = self.base_url + '/eval_music'
-        self.eval_nonmusic_files_path = self.base_url + '/eval_nonmusic'
+        #self.processed_music_files_path = self.base_url + '/processed/nonmusic'
+        self.processed_music_files_path = self.base_url + '/processed/eval_nonmusic'
 
     def process_one_file(self, filename, class_list):
         y, sr = librosa.load(filename, sr=44100)
@@ -75,6 +77,6 @@ class PreprocessTest(unittest.TestCase):
 
     def test(self):
         test_file = self.preprocess.process_one_file(self.test_files_dir + '/test_wav_file_01.wav', [1., 0.])
-        self.assertListEqual(test_file[0], )
+        self.assertListEqual(test_file[0], self.expected_list)
 
 AudioSetPreprocess().persistance()

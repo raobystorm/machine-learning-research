@@ -50,8 +50,6 @@ def download_one_audio(sound_clip):
 def download_audio_set():
     with open(data_csv_file, mode='r') as source:
         reader = csv.reader(source)
-        music_count = 0
-        nonmusic_cound = 0
         #music_limit = 6000
         music_limit = 500
         #nonmusic_limit = 14000
