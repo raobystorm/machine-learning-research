@@ -15,7 +15,6 @@ with open(base_url + 'balanced_train_segments.csv', mode='r') as fp:
         for row in reader:
             eval_list.append(row)
 
-        print
         for filename in os.listdir(base_url + 'eval_nonmusic'):
             filename = filename.rsplit('.', 1)[0]
             if '/m/04rlf' in str(list(filter(lambda x: filename in x, eval_list))[0]):
