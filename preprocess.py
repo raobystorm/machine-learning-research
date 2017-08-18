@@ -64,7 +64,7 @@ class AudioSetPreprocess(object):
         processed_list = self.preprocess()
         print(len(processed_list))
         #with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
-        with open(base_url + '/eval_data.dat', 'wb') as fp:
+        with open(self.base_url + '/eval_data.dat', 'wb') as fp:
             pickle.dump(processed_list, fp)
             librosa.cache.clear()
 
