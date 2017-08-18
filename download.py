@@ -1,5 +1,4 @@
 import csv
-import random
 import subprocess
 
 youtube_url_prefix = 'http://youtu.be/'
@@ -59,26 +58,23 @@ def download_audio_set():
             clip = SoundClip(row[0], row[1], row[2], row[3:])
             clip_list.append(clip)
 
-        random.shuffle(clip_list)
         music_list = []
         nonmusic_list = []
 
         for clip in clip_list:
-            if len(music_list) == music_limit and len(nonmusic_list) == nonmusic_limit:
+            if len(music_list) >= music_limit and len(nonmusic_list) >= nonmusic_limit:
                 break
-
             if clip.is_music and len(music_list) < music_limit:
                 music_list.append(clip)
             elif len(nonmusic_list) < nonmusic_limit:
                 nonmusic_list.append(clip)
 
+        print('music tracks:%d' % len(music_list))
         for music in music_list:
             download_one_audio(music)
 
+        print('nonmusic tracks:%d' % len(nonmusic_list))
         for nonmusic in nonmusic_list:
             download_one_audio(nonmusic)
-
-        print(len(music_list))
-        print(len(nonmusic_list))
 
 download_audio_set()
