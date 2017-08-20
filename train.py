@@ -119,10 +119,11 @@ y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 saver = tf.train.Saver()
 
 #learning_rate
-global_step = tf.Variable(0, trainable=False)
-boundaries = [30000, 80000, 150000]
-values = [1e-4, 5e-5, 1e-5, 3e-5]
-learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
+#global_step = tf.Variable(0, trainable=False)
+#boundaries = [30000, 80000, 150000]
+#values = [1e-4, 5e-5, 1e-5, 3e-5]
+#learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
+learning_rate = 1e-5
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
