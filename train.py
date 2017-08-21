@@ -8,15 +8,15 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-max_iter = 300000
-batch_size = 40
+max_iter = 100000
+batch_size = 64
 random_sample_size = 128
 isLoad = False
 
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.1503022968'
-eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
+eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data01.dat'
 
 def random_sample(data_batch):
     data_list = []
@@ -39,7 +39,8 @@ def get_batch(data, batch_size, iteration):
         return data_batch
     elif start_of_batch is len(data):
         return data[0:batch_size]
-    else return data[len(data) - batch_size, len(data)]
+    else:
+        return data[(len(data)-batch_size):len(data)]
 
 def load_data(file):
     with open(file, 'rb') as fp:
@@ -69,50 +70,46 @@ def conv2d(x, W):
 def max_pool(x, k):
     return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
 
+def max_pool_wh(x, w, h):
+    return tf.nn.max_pool(x, ksize=[1, w, h, 1], strides=[1, w, h, 1], padding='SAME')
+
 # Reshape input
 x_image = tf.reshape(x, [-1, 128, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible([5, 5, 1, 48])
+W_conv1 = weight_varible([8, 4, 1, 48])
 b_conv1 = bias_variable([48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool(h_conv1, 2)
+h_pool1 = max_pool_wh(h_conv1, 4, 2)
 
 # conv layer-2
-W_conv2 = weight_varible([3, 3, 48, 64])
-b_conv2 = bias_variable([64])
+W_conv2 = weight_varible([3, 3, 48, 96])
+b_conv2 = bias_variable([96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool(h_conv2, 2)
 
 # conv layer-3
-W_conv3 = weight_varible([3, 3, 64, 96])
+W_conv3 = weight_varible([3, 3, 96, 128])
 b_conv3 = bias_variable([96])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 h_pool3 = max_pool(h_conv3, 2)
 
 # conv layer-4
-W_conv4 = weight_varible([3, 3, 96, 96])
+W_conv4 = weight_varible([3, 3, 128, 96])
 b_conv4 = bias_variable([96])
 
 h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
 h_pool4 = max_pool(h_conv4, 2)
 
-# conv layer-5
-W_conv5 = weight_varible([3, 3, 96, 64])
-b_conv5 = bias_variable([64])
-
-h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
-h_pool5 = max_pool(h_conv5, 2)
-
 # fully-connect-1
-W_fc1 = weight_varible([4 * 2 * 64, 256])
+W_fc1 = weight_varible([4 * 4 * 96, 256])
 b_fc1 = bias_variable([256])
 
-h_pool5_flat = tf.reshape(h_pool5, [-1, 4 * 2 * 64])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
+h_pool4_flat = tf.reshape(h_pool4, [-1, 4 * 4 * 96])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
 
 # dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
@@ -127,10 +124,11 @@ y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 saver = tf.train.Saver()
 
 #learning_rate
-global_step = tf.Variable(0, trainable=False)
-boundaries = [30000, 80000, 150000]
-values = [1e-4, 5e-5, 1e-5, 3e-5]
-learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
+#global_step = tf.Variable(0, trainable=False)
+#boundaries = [30000, 80000, 150000]
+#values = [1e-4, 5e-5, 1e-5, 3e-5]
+#learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
+learning_rate = 1e-4
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -154,11 +152,6 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        #if i > 6400:
-            #print('step: %d' % i)
-            #print('batch size: %d' % len(train_batch))
-            #print('train_batch[0] size: %d' % len(train_batch[0]))
-            #print('train_batch[0][0] size: %d' % len(train_batch[0][0]))
         train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
