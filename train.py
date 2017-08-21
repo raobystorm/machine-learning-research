@@ -35,8 +35,6 @@ def get_batch(data, batch_size, iteration):
     if start_of_batch < end_of_batch:
         return data[start_of_batch:end_of_batch]
     else:
-        start_of_batch = (start_of_batch + 1) % len(data)
-        end_of_batch = (end_of_batch + 1) % len(data)
         data_batch = np.vstack((data[start_of_batch:],data[:end_of_batch]))
         return data_batch
 
