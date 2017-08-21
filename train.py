@@ -72,7 +72,7 @@ def max_pool(x, k):
 x_image = tf.reshape(x, [-1, 128, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible([8, 4, 1, 48])
+W_conv1 = weight_varible([5, 5, 1, 48])
 b_conv1 = bias_variable([48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -99,12 +99,19 @@ b_conv4 = bias_variable([96])
 h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
 h_pool4 = max_pool(h_conv4, 2)
 
+# conv layer-5
+W_conv5 = weight_varible([3, 3, 96, 64])
+b_conv5 = bias_variable([64])
+
+h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
+h_pool5 = max_pool(h_conv5, 2)
+
 # fully-connect-1
-W_fc1 = weight_varible([8 * 4 * 96, 256])
+W_fc1 = weight_varible([4 * 2 * 64, 256])
 b_fc1 = bias_variable([256])
 
-h_pool4_flat = tf.reshape(h_pool4, [-1, 8 * 4 * 96])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool4_flat, W_fc1) + b_fc1)
+h_pool5_flat = tf.reshape(h_pool5, [-1, 4 * 2 * 64])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
 
 # dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
@@ -119,11 +126,10 @@ y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 saver = tf.train.Saver()
 
 #learning_rate
-#global_step = tf.Variable(0, trainable=False)
-#boundaries = [30000, 80000, 150000]
-#values = [1e-4, 5e-5, 1e-5, 3e-5]
-#learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
-learning_rate = 1e-5
+global_step = tf.Variable(0, trainable=False)
+boundaries = [30000, 80000, 150000]
+values = [1e-4, 5e-5, 1e-5, 3e-5]
+learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -148,10 +154,10 @@ with tf.Session() as sess:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
         train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
-        if i % 5000 == 0:
-            test_batch = random_sample(test_data)
-            print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
-            print('Model saved in %s' % saver.save(sess, model_save_path))
+        #if i % 5000 == 0:
+        #    test_batch = random_sample(test_data)
+        #    print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
+        #    print('Model saved in %s' % saver.save(sess, model_save_path))
 
     test_batch = random_sample(test_data)
     print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
