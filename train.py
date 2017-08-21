@@ -92,7 +92,7 @@ h_pool2 = max_pool(h_conv2, 2)
 
 # conv layer-3
 W_conv3 = weight_varible([3, 3, 96, 128])
-b_conv3 = bias_variable([96])
+b_conv3 = bias_variable([128])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 h_pool3 = max_pool(h_conv3, 2)
@@ -148,7 +148,8 @@ with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
     for i in range(max_iter):
-        train_batch = random_sample(get_batch(data_, batch_size, i))
+        data_batch = tf.train.shuffle_batch(data_, batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+        data_batch = random_sample(data_batch)
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
