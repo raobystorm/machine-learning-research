@@ -34,9 +34,12 @@ def get_batch(data, batch_size, iteration):
     end_of_batch = (iteration * batch_size + batch_size) % len(data)
     if start_of_batch < end_of_batch:
         return data[start_of_batch:end_of_batch]
-    else:
+    elif start_of_batch is not len(data) and end_of_batch is not 0:
         data_batch = np.vstack((data[start_of_batch:],data[:end_of_batch]))
         return data_batch
+    elif start_of_batch is len(data):
+        return data[0:batch_size]
+    else return data[len(data) - batch_size, len(data)]
 
 def load_data(file):
     with open(file, 'rb') as fp:
