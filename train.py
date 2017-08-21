@@ -154,9 +154,10 @@ with tf.Session() as sess:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
         if i > 6400:
+            print('step: %d' % i)
             print('batch size: %d' % len(train_batch))
             print('train_batch[0] size: %d' % len(train_batch[0]))
-            print('train_batch[0][0] size: %d' % len(train_batch][0][0]))
+            print('train_batch[0][0] size: %d' % len(train_batch[0][0]))
         train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         #if i % 5000 == 0:
         #    test_batch = random_sample(test_data)
