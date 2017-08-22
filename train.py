@@ -6,11 +6,11 @@ import librosa
 import pickle
 import random
 
-n_input = 128 * 64
+n_input = 256 * 64
 n_classes = 2
-max_iter = 100000
+max_iter = 150000
 batch_size = 64
-random_sample_size = 128
+random_sample_size = 256
 isLoad = False
 
 print('n_input: %d' % n_input)
@@ -21,7 +21,7 @@ print('random_sample_size: %d' % random_sample_size)
 
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.1503022968'
+data_file = '/home/centos/audio-recognition/AudioSet/data.1503388707'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data01.dat'
 
 def random_sample(data_batch):
@@ -80,45 +80,51 @@ def max_pool_wh(x, w, h):
     return tf.nn.max_pool(x, ksize=[1, w, h, 1], strides=[1, w, h, 1], padding='SAME')
 
 # Reshape input
-x_image = tf.reshape(x, [-1, 128, 64, 1])
+x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible([10, 5, 1, 64])
-b_conv1 = bias_variable([64])
+W_conv1 = weight_varible([10, 5, 1, 48])
+b_conv1 = bias_variable([48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool_wh(h_conv1, 6, 3)
+h_pool1 = max_pool_wh(h_conv1, 4, 2)
 
 # conv layer-2
-W_conv2 = weight_varible([3, 3, 64, 96])
+W_conv2 = weight_varible([4, 4, 48, 96])
 b_conv2 = bias_variable([96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool(h_conv2, 4)
+h_pool2 = max_pool_wh(h_conv2, 4, 2)
 
 # conv layer-3
-#W_conv3 = weight_varible([3, 3, 96, 96])
-#b_conv3 = bias_variable([96])
+W_conv3 = weight_varible([3, 3, 96, 128])
+b_conv3 = bias_variable([128])
 
-#h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-#h_pool3 = max_pool(h_conv3, 2)
+h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+h_pool3 = max_pool(h_conv3, 3)
 
 # fully-connect-1
-W_fc1 = weight_varible([6 * 6 * 96, 256])
-b_fc1 = bias_variable([256])
+W_fc1 = weight_varible([6 * 6 * 128, 1024])
+b_fc1 = bias_variable([1024])
 
-h_pool2_flat = tf.reshape(h_pool2, [-1, 6 * 6 * 96])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+h_pool3_flat = tf.reshape(h_pool3, [-1, 6 * 6 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool3_flat, W_fc1) + b_fc1)
+
+# fully-connect-2
+W_fc2 = weight_varible([1024, 128])
+b_fc2 = bias_variable([128])
+
+h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
 
 # dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
-h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
+h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # output layer: softmax
-W_fc2 = weight_varible([256, n_classes])
-b_fc2 = bias_variable([n_classes])
+W_fc3 = weight_varible([128, n_classes])
+b_fc3 = bias_variable([n_classes])
 
-y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
 saver = tf.train.Saver()
 
