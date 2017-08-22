@@ -13,7 +13,7 @@ class AudioSetPreprocess(object):
         self.music_files_path = self.base_url + '/music'
         self.processed_music_files_path = self.base_url + '/processed/music'
         self.nonmusic_files_path = self.base_url + '/nonmusic'
-        self.processed_music_files_path = self.base_url + '/processed/nonmusic'
+        self.processed_nonmusic_files_path = self.base_url + '/processed/nonmusic'
         #self.music_files_path = self.base_url + '/eval_music'
         #self.processed_music_files_path = self.base_url + '/processed/eval_music'
         #self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
