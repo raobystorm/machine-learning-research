@@ -13,6 +13,12 @@ batch_size = 64
 random_sample_size = 128
 isLoad = False
 
+print('n_input: %d' % n_input)
+print('n_classes: %d' % n_classes)
+print('max_iter: %d' % max_iter)
+print('batch_size: %d' % batch_size)
+print('random_sample_size: %d' % random_sample_size)
+
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.1503022968'
@@ -145,7 +151,7 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
