@@ -22,7 +22,7 @@ print('random_sample_size: %d' % random_sample_size)
 model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
 
 data_file = '/home/centos/audio-recognition/AudioSet/data.1503388707'
-eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data01.dat'
+eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 
 def random_sample(data_batch):
     data_list = []
