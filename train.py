@@ -8,8 +8,8 @@ import random
 
 n_input = 128 * 64
 n_classes = 2
-max_iter = 100000
-batch_size = 64
+max_iter = 200000
+batch_size = 128
 random_sample_size = 128
 isLoad = False
 
@@ -121,7 +121,7 @@ saver = tf.train.Saver()
 #boundaries = [30000, 80000, 150000]
 #values = [1e-4, 5e-5, 1e-5, 3e-5]
 #learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
-learning_rate = 1e-4
+learning_rate = 5e-5
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
