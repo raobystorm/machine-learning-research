@@ -7,13 +7,15 @@ from datetime import datetime
 class AudioSetPreprocess(object):
     def __init__(self):
         self.random_sample_size = 256
-        self.music_files_limit = 6000
-        self.nonmusic_files_limit = 14000
         self.base_url = '/home/centos/audio-recognition/AudioSet'
+        #self.music_files_limit = 6000
+        #self.nonmusic_files_limit = 14000
         #self.music_files_path = self.base_url + '/music'
         #self.processed_music_files_path = self.base_url + '/processed/music'
         #self.nonmusic_files_path = self.base_url + '/nonmusic'
         #self.processed_nonmusic_files_path = self.base_url + '/processed/nonmusic'
+        self.music_files_limit = 100
+        self.nonmusic_files_limit = 100
         self.music_files_path = self.base_url + '/eval_music'
         self.processed_music_files_path = self.base_url + '/processed/eval_music'
         self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
