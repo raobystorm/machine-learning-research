@@ -9,7 +9,7 @@ import random
 n_input = 256 * 64
 n_classes = 2
 max_iter = 150000
-batch_size = 128
+batch_size = 64
 random_sample_size = 256
 isLoad = False
 
@@ -97,27 +97,42 @@ h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool_wh(h_conv2, 4, 2)
 
 # conv layer-3
-W_conv3 = weight_varible([3, 3, 96, 128])
-b_conv3 = bias_variable([128])
+W_conv3 = weight_varible([3, 3, 96, 96])
+b_conv3 = bias_variable([96])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-h_pool3 = max_pool(h_conv3, 3)
+
+# conv layer-4
+W_conv4 = weight_varible([3, 3, 96, 96])
+b_conv4 = bias_variable([96])
+
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+
+# conv layer-5
+W_conv5 = weight_varible([3, 3, 96, 128])
+b_conv5 = bias_variable([128])
+
+h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
+h_pool5 = max_pool(h_conv5, 2)
 
 # fully-connect-1
-W_fc1 = weight_varible([6 * 6 * 128, 1024])
+W_fc1 = weight_varible([8 * 8 * 128, 1024])
 b_fc1 = bias_variable([1024])
 
-h_pool3_flat = tf.reshape(h_pool3, [-1, 6 * 6 * 128])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool3_flat, W_fc1) + b_fc1)
+h_pool5_flat = tf.reshape(h_pool5, [-1, 8 * 8 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
+
+#dropout-1
+keep_prob_1 = tf.placeholder(tf.float32)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
 # fully-connect-2
 W_fc2 = weight_varible([1024, 128])
 b_fc2 = bias_variable([128])
 
-h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
+h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-# dropout-1
-keep_prob_1 = tf.placeholder(tf.float32)
+# dropout-2
 h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # output layer: softmax
@@ -157,7 +172,7 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
