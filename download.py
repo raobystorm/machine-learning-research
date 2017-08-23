@@ -3,12 +3,12 @@ import subprocess
 
 youtube_url_prefix = 'http://youtu.be/'
 music_label = '/m/04rlf'
-#music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
-music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
-#nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
-nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
-#data_csv_file = '/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv'
-data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
+music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
+nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
+data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
+#music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
+#nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
+#data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
 
 class SoundClip(object):
     def __init__(self, youtube_id, start_time, end_time, labels):
@@ -39,6 +39,7 @@ def download_one_audio(sound_clip):
                  '-ar', '44100',
                  '-ac', '2',
                  '-t', '10',
+                 '-threads', '0'
                 sound_clip.file_name]
         download_proc = subprocess.Popen(download_cmd, stdout=subprocess.PIPE)
         outputs, err = download_proc.communicate()
@@ -49,10 +50,10 @@ def download_one_audio(sound_clip):
 def download_audio_set():
     with open(data_csv_file, mode='r') as source:
         reader = csv.reader(source)
-        #music_limit = 6000
-        music_limit = 500
-        #nonmusic_limit = 14000
-        nonmusic_limit = 500
+        music_limit = 14000
+        #music_limit = 500
+        nonmusic_limit = 6000
+        #nonmusic_limit = 500
         clip_list = []
         for row in reader:
             clip = SoundClip(row[0], row[1], row[2], row[3:])
