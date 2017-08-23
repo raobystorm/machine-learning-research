@@ -6,11 +6,11 @@ import librosa
 import pickle
 import random
 
-n_input = 256 * 64
+n_input = 128 * 64
 n_classes = 2
 max_iter = 100000
 batch_size = 64
-random_sample_size = 256
+random_sample_size = 128
 isLoad = False
 
 print('n_input: %d' % n_input)
@@ -167,7 +167,7 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.25})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
