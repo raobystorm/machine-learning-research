@@ -78,7 +78,7 @@ def max_pool_wh(x, w, h):
     return tf.nn.max_pool(x, ksize=[1, w, h, 1], strides=[1, w, h, 1], padding='SAME')
 
 # Reshape input
-x_image = tf.reshape(x, [-1, 256, 64, 1])
+x_image = tf.reshape(x, [-1, 128, 64, 1])
 
 # conv layer-1
 W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
