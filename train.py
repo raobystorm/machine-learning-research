@@ -63,10 +63,10 @@ x = tf.placeholder(tf.float32, shape=[None, n_input])
 y_ = tf.placeholder(tf.float32, shape=[None, n_classes])
 
 def weight_varible(name, shape):
-    return tf.get_variable(name, tf.truncated_normal(shape=shape, stddev=0.1))
+    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.xavier_initializer(uniform=True, dtype=tf.float32))
 
 def bias_variable(name, shape):
-    return tf.get_variable(name, tf.constant(0.1, shape=shape))
+    return tf.get_variable(name, initializer=tf.constant(0.1, shape=shape, dtype=tf.float32))
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
