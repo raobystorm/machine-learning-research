@@ -155,12 +155,13 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.1})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
             print('test accuracy %g' % test_accuracy)
             if test_accuracy > max_accuracy:
+                max_accuracy = test_accuracy
                 print('Model saved in %s' % saver.save(sess, model_save_path))
 
     test_batch = random_sample(test_data)
