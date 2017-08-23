@@ -92,7 +92,7 @@ W_conv2 = weight_varible('W_conv2', [5, 5, 48, 96])
 b_conv2 = bias_variable('b_conv2', [96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool(h_conv2, 4)
+h_pool2 = max_pool(h_conv2, 2)
 
 # conv layer-3
 W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
