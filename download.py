@@ -39,7 +39,7 @@ def download_one_audio(sound_clip):
                  '-ar', '44100',
                  '-ac', '2',
                  '-t', '10',
-                 '-threads', '0'
+                 '-threads', '0',
                 sound_clip.file_name]
         download_proc = subprocess.Popen(download_cmd, stdout=subprocess.PIPE)
         outputs, err = download_proc.communicate()
