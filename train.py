@@ -6,11 +6,11 @@ import librosa
 import pickle
 import random
 
-n_input = 256 * 64
+n_input = 128 * 64
 n_classes = 2
 max_iter = 100000
 batch_size = 64
-random_sample_size = 256
+random_sample_size = 128
 isLoad = False
 
 print('n_input: %d' % n_input)
@@ -78,7 +78,7 @@ def max_pool_wh(x, w, h):
     return tf.nn.max_pool(x, ksize=[1, w, h, 1], strides=[1, w, h, 1], padding='SAME')
 
 # Reshape input
-x_image = tf.reshape(x, [-1, 256, 64, 1])
+x_image = tf.reshape(x, [-1, 128, 64, 1])
 
 # conv layer-1
 W_conv1 = weight_varible('W_conv1', [11, 11, 1, 48])
@@ -92,7 +92,7 @@ W_conv2 = weight_varible('W_conv2', [5, 5, 48, 96])
 b_conv2 = bias_variable('b_conv2', [96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool_wh(h_conv2, 4, 2)
+h_pool2 = max_pool(h_conv2, 4)
 
 # conv layer-3
 W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
