@@ -8,18 +8,18 @@ class AudioSetPreprocess(object):
     def __init__(self):
         self.random_sample_size = 256
         self.base_url = '/home/centos/audio-recognition/AudioSet'
-        #self.music_files_limit = 6000
-        #self.nonmusic_files_limit = 14000
-        #self.music_files_path = self.base_url + '/music'
-        #self.processed_music_files_path = self.base_url + '/processed/music'
-        #self.nonmusic_files_path = self.base_url + '/nonmusic'
-        #self.processed_nonmusic_files_path = self.base_url + '/processed/nonmusic'
-        self.music_files_limit = 100
-        self.nonmusic_files_limit = 100
-        self.music_files_path = self.base_url + '/eval_music'
-        self.processed_music_files_path = self.base_url + '/processed/eval_music'
-        self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
-        self.processed_nonmusic_files_path = self.base_url + '/processed/eval_nonmusic'
+        self.music_files_limit = 15000
+        self.nonmusic_files_limit = 15000
+        self.music_files_path = self.base_url + '/music'
+        self.processed_music_files_path = self.base_url + '/processed/music'
+        self.nonmusic_files_path = self.base_url + '/nonmusic'
+        self.processed_nonmusic_files_path = self.base_url + '/processed/nonmusic'
+        #self.music_files_limit = 100
+        #self.nonmusic_files_limit = 100
+        #self.music_files_path = self.base_url + '/eval_music'
+        #self.processed_music_files_path = self.base_url + '/processed/eval_music'
+        #self.nonmusic_files_path = self.base_url + '/eval_nonmusic'
+        #self.processed_nonmusic_files_path = self.base_url + '/processed/eval_nonmusic'
 
     def process_one_file(self, filename, class_list):
         y, sr = librosa.load(filename, sr=44100)
@@ -65,8 +65,8 @@ class AudioSetPreprocess(object):
         librosa.cache.clear()
         processed_list = self.preprocess()
         print(len(processed_list))
-        #with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
-        with open(self.base_url + '/eval_data.dat', 'wb') as fp:
+        with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
+        #with open(self.base_url + '/eval_data.dat', 'wb') as fp:
             pickle.dump(processed_list, fp)
             librosa.cache.clear()
 
