@@ -81,7 +81,7 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [7, 7, 1, 48])
+W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
 b_conv1 = bias_variable('b_conv1', [48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -167,7 +167,7 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
