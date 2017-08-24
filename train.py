@@ -6,11 +6,11 @@ import librosa
 import pickle
 import random
 
-n_input = 128 * 64
+n_input = 256 * 64
 n_classes = 2
 max_iter = 100000
 batch_size = 64
-random_sample_size = 128
+random_sample_size = 256
 isLoad = False
 
 print('n_input: %d' % n_input)
@@ -78,10 +78,10 @@ def max_pool_wh(x, w, h):
     return tf.nn.max_pool(x, ksize=[1, w, h, 1], strides=[1, w, h, 1], padding='SAME')
 
 # Reshape input
-x_image = tf.reshape(x, [-1, 128, 64, 1])
+x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [11, 11, 1, 48])
+W_conv1 = weight_varible('W_conv1', [7, 7, 1, 48])
 b_conv1 = bias_variable('b_conv1', [48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -92,7 +92,7 @@ W_conv2 = weight_varible('W_conv2', [5, 5, 48, 96])
 b_conv2 = bias_variable('b_conv2', [96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool(h_conv2, 2)
+h_pool2 = max_pool_wh(h_conv2, 4, 2)
 
 # conv layer-3
 W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
@@ -167,7 +167,7 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.25})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
             test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
