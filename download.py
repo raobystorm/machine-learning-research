@@ -1,4 +1,5 @@
 import csv
+import random
 import subprocess
 
 youtube_url_prefix = 'http://youtu.be/'
@@ -30,7 +31,6 @@ def download_one_audio(sound_clip):
         gen_proc = subprocess.Popen(gen_cmd.split(), stdout=subprocess.PIPE)
         outputs, err = gen_proc.communicate()
         download_str = outputs.split()
-        print(sound_clip.file_name)
         download_cmd = ['ffmpeg',
                  '-ss', sound_clip.start_time,
                  '-i', download_str[0],
@@ -43,6 +43,9 @@ def download_one_audio(sound_clip):
                 sound_clip.file_name]
         download_proc = subprocess.Popen(download_cmd, stdout=subprocess.PIPE)
         outputs, err = download_proc.communicate()
+        if err is None:
+            return False
+        return True
     except Exception:
         # For some videos already deleted and some failed to encoding
         pass
@@ -50,9 +53,9 @@ def download_one_audio(sound_clip):
 def download_audio_set():
     with open(data_csv_file, mode='r') as source:
         reader = csv.reader(source)
-        music_limit = 6000
+        music_limit = 7000
         #music_limit = 500
-        nonmusic_limit = 6000
+        nonmusic_limit = 7000
         #nonmusic_limit = 500
         clip_list = []
         for row in reader:
@@ -62,20 +65,18 @@ def download_audio_set():
         music_list = []
         nonmusic_list = []
 
+        random.shuffle(clip_list)
+
         for clip in clip_list:
-            if len(music_list) >= music_limit and len(nonmusic_list) >= nonmusic_limit:
-                break
             if clip.is_music and len(music_list) < music_limit:
-                music_list.append(clip)
+                if download_one_audio(clip):
+                    print('True music! %s' % clip.file_name)
+                    music_list.append(clip)
             elif len(nonmusic_list) < nonmusic_limit:
-                nonmusic_list.append(clip)
-
-        print('music tracks:%d' % len(music_list))
-        for music in music_list:
-            download_one_audio(music)
-
-        print('nonmusic tracks:%d' % len(nonmusic_list))
-        for nonmusic in nonmusic_list:
-            download_one_audio(nonmusic)
+                if download_one_audio(clip):
+                    print('True nonmusic! %s' % clip.file_name)
+                    nonmusic_list.append(clip)
+            elif len(nonmusic_list) >= nonmusic_limit and len(music_list) >= music_limit:
+                break;
 
 download_audio_set()
