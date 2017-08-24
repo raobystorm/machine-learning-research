@@ -4,9 +4,9 @@ import subprocess
 
 youtube_url_prefix = 'http://youtu.be/'
 music_label = '/m/04rlf'
-music_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/music/'
-nonmusic_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/nonmusic/'
-data_csv_file = '/Users/rui.zhong/audio-recognition/AudioSet/eval_segments.csv'
+music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
+nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
+data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
 #music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
 #nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
 #data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
