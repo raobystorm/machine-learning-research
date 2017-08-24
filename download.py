@@ -4,12 +4,22 @@ import subprocess
 
 youtube_url_prefix = 'http://youtu.be/'
 music_label = '/m/04rlf'
-music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
-nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
-data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
+music_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/music/'
+nonmusic_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/nonmusic/'
+data_csv_file = '/Users/rui.zhong/audio-recognition/AudioSet/eval_segments.csv'
 #music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
 #nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
 #data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class SoundClip(object):
     def __init__(self, youtube_id, start_time, end_time, labels):
@@ -30,6 +40,8 @@ def download_one_audio(sound_clip):
         gen_cmd = 'youtube-dl -x -g ' + sound_clip.url
         gen_proc = subprocess.Popen(gen_cmd.split(), stdout=subprocess.PIPE)
         outputs, err = gen_proc.communicate()
+        if gen_proc.returncode is not 0:
+            return False
         download_str = outputs.split()
         download_cmd = ['ffmpeg',
                  '-ss', sound_clip.start_time,
@@ -43,9 +55,9 @@ def download_one_audio(sound_clip):
                 sound_clip.file_name]
         download_proc = subprocess.Popen(download_cmd, stdout=subprocess.PIPE)
         outputs, err = download_proc.communicate()
-        if err is None:
-            return False
-        return True
+        if download_proc.returncode is 0:
+            return True
+        return False
     except Exception:
         # For some videos already deleted and some failed to encoding
         pass
@@ -70,13 +82,15 @@ def download_audio_set():
         for clip in clip_list:
             if clip.is_music and len(music_list) < music_limit:
                 if download_one_audio(clip):
-                    print('True music! %s' % clip.file_name)
+                    print(bcolors.WARNING + 'True music! ' + clip.file_name + bcolors.ENDC)
                     music_list.append(clip)
             elif len(nonmusic_list) < nonmusic_limit:
                 if download_one_audio(clip):
-                    print('True nonmusic! %s' % clip.file_name)
+                    print(bcolors.WARNING + 'True nonmusic! ' + clip.file_name  + bcolors.ENDC)
                     nonmusic_list.append(clip)
             elif len(nonmusic_list) >= nonmusic_limit and len(music_list) >= music_limit:
                 break;
+
+        print('music count: %d, nonmusic count: %d' % (len(music_list), len(nonmusic_list)))
 
 download_audio_set()
