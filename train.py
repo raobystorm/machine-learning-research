@@ -130,7 +130,7 @@ y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 saver = tf.train.Saver()
 
 #learning_rate
-learning_rate = 1e-4
+learning_rate = 1e-3
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
