@@ -16,7 +16,7 @@ with open('/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv',
 
             reader = csv.reader(unfp)
             for row in reader:
-                str.list.append(row)
+                str_list.append(row)
 
             for filename in os.listdir('/home/centos/audio-recognition/AudioSet/music'):
                 filename = filename.rsplit('.', 1)[0]
