@@ -1,27 +1,23 @@
 import tensorflow as tf
 import numpy as np
 import os
-import time
-import librosa
+import timeit
 import pickle
 import random
 
 n_input = 256 * 64
 n_classes = 2
-max_iter = 100000
 batch_size = 64
 random_sample_size = 256
-isLoad = False
+isLoad = True
 
 print('n_input: %d' % n_input)
 print('n_classes: %d' % n_classes)
-print('max_iter: %d' % max_iter)
 print('batch_size: %d' % batch_size)
 print('random_sample_size: %d' % random_sample_size)
 
-model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
+model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt.085'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.1503571521'
 eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 
 def random_sample(data_batch):
@@ -152,32 +148,11 @@ correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
-    data_ = load_data(data_file)
-    random.shuffle(data_)
     test_data = load_data(eval_data_file)
-    max_accuracy = 0.0
-
-    if isLoad:
-        saver.restore(sess, model_save_path)
-    else:
-        sess.run(tf.global_variables_initializer())
-
-    for i in range(max_iter):
-        train_batch = random_sample(get_batch(data_, batch_size, i))
-        if i % 800 == 0:
-            train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
-            print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
-        if i % 5000 == 0:
-            test_batch = random_sample(test_data)
-            test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
-            print('test accuracy %g' % test_accuracy)
-            if test_accuracy > max_accuracy:
-                max_accuracy = test_accuracy
-                print('Model saved in %s' % saver.save(sess, model_save_path))
-
+    random.shuffle(test_data)
+    saver.restore(sess, model_save_path)
+    start = timeit.default_timer()
     test_batch = random_sample(test_data)
     test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
-    print('test accuracy %g' % test_accuracy)
-    if test_accuracy > max_accuracy:
-        print('Model saved in %s' % saver.save(sess, model_save_path))
+    stop = timeit.default_timer()
+    print('test accuracy %g, with time: %g' % (test_accuracy, stop - start))
