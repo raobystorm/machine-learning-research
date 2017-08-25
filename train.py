@@ -27,10 +27,8 @@ eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 def random_sample(data_batch):
     data_list = []
     label_list = []
-    random.seed(int(time.time()))
     for data in data_batch:
-        start_idx = random.randint(0, len(data[0]) - random_sample_size)
-        sample = data[0][start_idx : start_idx + random_sample_size]
+        sample = random.sample(list(data[0]), random_sample_size)
         data_list.append(np.reshape(sample, [n_input]))
         label_list.append(np.reshape(data[1], [n_classes]))
     return data_list, label_list
