@@ -7,9 +7,9 @@ music_label = '/m/04rlf'
 music_file_path = '/home/centos/audio-recognition/AudioSet/music/'
 nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/nonmusic/'
 data_csv_file = '/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv'
-#music_file_path = '/home/centos/audio-recognition/AudioSet/eval_music/'
-#nonmusic_file_path = '/home/centos/audio-recognition/AudioSet/eval_nonmusic/'
-#data_csv_file = '/home/centos/audio-recognition/AudioSet/eval_segments.csv'
+#music_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/eval_music/'
+#nonmusic_file_path = '/Users/rui.zhong/audio-recognition/AudioSet/eval_nonmusic/'
+#data_csv_file = '/Users/rui.zhong/audio-recognition/AudioSet/eval_segments.csv'
 
 class bcolors:
     HEADER = '\033[95m'
@@ -29,10 +29,10 @@ class SoundClip(object):
         self.labels = list(map(lambda x: x.replace('\"','').strip(), labels))
         if music_label in self.labels:
             self.is_music = True
-            self.file_name = music_file_path + youtube_id + '.wav'
+            self.file_name = music_file_path + youtube_id + '.m4a'
         else:
             self.is_music = False
-            self.file_name = nonmusic_file_path + youtube_id + '.wav'
+            self.file_name = nonmusic_file_path + youtube_id + '.m4a'
         self.url = youtube_url_prefix + youtube_id
 
 def download_one_audio(sound_clip):
@@ -47,7 +47,7 @@ def download_one_audio(sound_clip):
                  '-ss', sound_clip.start_time,
                  '-i', download_str[0],
                  '-n',
-                 '-f', 'wav',
+                 '-f', 'mp4',
                  '-ar', '44100',
                  '-ac', '2',
                  '-t', '10',
@@ -65,9 +65,9 @@ def download_one_audio(sound_clip):
 def download_audio_set():
     with open(data_csv_file, mode='r') as source:
         reader = csv.reader(source)
-        music_limit = 7000
+        music_limit = 100
         #music_limit = 500
-        nonmusic_limit = 7000
+        nonmusic_limit = 100
         #nonmusic_limit = 500
         clip_list = []
         for row in reader:
