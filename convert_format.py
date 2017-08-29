@@ -23,7 +23,7 @@ def convert():
             os.remove(input_file)
 
     for f in os.listdir(nonmusic_folder):
-        input_file = music_folder + '/' + f
+        input_file = nonmusic_folder + '/' + f
         output_file = input_file.replace('.wav', '.m4a')
         cmd = [ 'ffmpeg',
             '-i', input_file,
