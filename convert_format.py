@@ -1,8 +1,8 @@
 import subprocess as sp
 import os
 
-music_folder = '/Users/rui.zhong/audio-recognition/AudioSet/music'
-nonmusic_folder = '/Users/rui.zhong/audio-recognition/AudioSet/nonmusic'
+music_folder = '/home/centos/audio-recognition/AudioSet/music'
+nonmusic_folder = '/home/centos/audio-recognition/AudioSet/nonmusic'
 
 def convert():
     for f in os.listdir(music_folder):
