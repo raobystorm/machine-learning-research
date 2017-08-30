@@ -81,7 +81,7 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [11, 11, 1, 48])
+W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
 b_conv1 = bias_variable('b_conv1', [48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -99,22 +99,34 @@ W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
 b_conv3 = bias_variable('b_conv3', [96])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-h_pool3 = max_pool(h_conv3, 3)
+
+# conv layer-4
+W_conv4 = weight_varible('W_conv4', [3, 3, 96, 96])
+b_conv4 = bias_variable('b_conv4', [96])
+
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+
+# conv layer-5
+W_conv5 = weight_varible('W_conv5', [3, 3, 96, 128])
+b_conv5 = bias_variable('b_conv5', [128])
+
+h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
+h_pool5 = max_pool(h_conv5, 2)
 
 # fully-connect-1
-W_fc1 = weight_varible('W_fc1', [6 * 6 * 96, 512])
-b_fc1 = bias_variable('b_fc1', [512])
+W_fc1 = weight_varible('W_fc1', [8 * 8 * 128, 1024])
+b_fc1 = bias_variable('b_fc1', [1024])
 
-h_pool3_flat = tf.reshape(h_pool3, [-1, 6 * 6 * 96])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool3_flat, W_fc1) + b_fc1)
+h_pool5_flat = tf.reshape(h_pool5, [1, 8 * 8 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
 
 #dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
-# fully-connect-2
-W_fc2 = weight_varible('W_fc2', [512, 64])
-b_fc2 = bias_variable('b_fc2', [64])
+# fullyconnect-2
+W_fc2 = weight_varible('W_fc2', [1024, 128])
+b_fc2 = bias_variable('b_fc2', [128])
 
 h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
@@ -122,7 +134,7 @@ h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # output layer: softmax
-W_fc3 = weight_varible('W_fc3', [64, n_classes])
+W_fc3 = weight_varible('W_fc3', [128, n_classes])
 b_fc3 = bias_variable('b_fc3', [n_classes])
 
 y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
