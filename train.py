@@ -117,14 +117,14 @@ h_pool5 = max_pool(h_conv5, 2)
 W_fc1 = weight_varible('W_fc1', [8 * 8 * 128, 1024])
 b_fc1 = bias_variable('b_fc1', [1024])
 
-h_pool5_flat = tf.reshape(h_pool5, [1, 8 * 8 * 128])
+h_pool5_flat = tf.reshape(h_pool5, [-1, 8 * 8 * 128])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
 
 #dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
-# fullyconnect-2
+# fully-connect-2
 W_fc2 = weight_varible('W_fc2', [1024, 128])
 b_fc2 = bias_variable('b_fc2', [128])
 
