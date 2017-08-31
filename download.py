@@ -65,9 +65,9 @@ def download_one_audio(sound_clip):
 def download_audio_set():
     with open(data_csv_file, mode='r') as source:
         reader = csv.reader(source)
-        music_limit = 7000
+        music_limit = 5000
         #music_limit = 500
-        nonmusic_limit = 7000
+        nonmusic_limit = 5000
         #nonmusic_limit = 500
         clip_list = []
         for row in reader:
@@ -80,15 +80,17 @@ def download_audio_set():
         random.shuffle(clip_list)
 
         for clip in clip_list:
-            if clip.is_music and len(music_list) < music_limit:
-                if download_one_audio(clip):
-                    print(bcolors.WARNING + 'True music! ' + clip.file_name + bcolors.ENDC)
-                    music_list.append(clip)
-            elif len(nonmusic_list) < nonmusic_limit:
-                if download_one_audio(clip):
-                    print(bcolors.WARNING + 'True nonmusic! ' + clip.file_name  + bcolors.ENDC)
-                    nonmusic_list.append(clip)
-            elif len(nonmusic_list) >= nonmusic_limit and len(music_list) >= music_limit:
+            if len(music_list) < music_limit:
+                if clip.is_music:
+                    if download_one_audio(clip):
+                        print(bcolors.WARNING + 'True music! ' + clip.file_name + bcolors.ENDC)
+                        music_list.append(clip)
+            if len(nonmusic_list) < nonmusic_limit:
+                if not clip.is_music:
+                    if download_one_audio(clip):
+                        print(bcolors.WARNING + 'True nonmusic! ' + clip.file_name  + bcolors.ENDC)
+                        nonmusic_list.append(clip)
+            if len(nonmusic_list) >= nonmusic_limit and len(music_list) >= music_limit:
                 break;
 
         print('music count: %d, nonmusic count: %d' % (len(music_list), len(nonmusic_list)))
