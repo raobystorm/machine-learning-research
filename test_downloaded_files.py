@@ -32,7 +32,7 @@ for f in os.listdir(music_path):
         print('Move nonmusic in music folder! %s' % f)
         os.rename(music_path + '/' + f, nonmusic_path + '/' + f)
 
-for f in os.listdir(nonmusic_set):
+for f in os.listdir(nonmusic_path):
     if f not in nonmusic_set and f in music_set:
         print('Move music in nonmusic folder! %s' % f)
         os.rename(nonmusic_path + '/' + f, music_path + '/' + f)
