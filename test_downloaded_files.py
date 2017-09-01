@@ -11,8 +11,9 @@ def read_csv_file(fp):
     reader = csv.reader(fp)
     str_list = []
     for row in reader:
-        filename = row.split(',')[0]
-        if '/m/04rlf' in row:
+        filename = row[0]
+        string = ''.join(row)
+        if '/m/04rlf' in string:
             music_set.add(filename + '.m4a')
         else:
             nonmusic_set.add(filename + '.m4a')
@@ -26,6 +27,10 @@ with open('/home/centos/audio-recognition/AudioSet/eval_segments.csv', mode='r')
 with open('/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv', mode='r') as fp:
     read_csv_file(fp)
 
+print(len(music_set))
+print(len(nonmusic_set))
+
+"""
 for f in os.listdir(music_path):
     if f not in music_set and f in nonmusic_set:
         print('Move nonmusic in music folder! %s' % f)
@@ -35,3 +40,4 @@ for f in os.listdir(nonmusic_set):
     if f not in nonmusic_set and f in music_set:
         print('Move music in nonmusic folder! %s' % f)
         os.rename(nonmusic_path + '/' + f, music_path + '/' + f)
+"""
