@@ -8,8 +8,8 @@ class AudioSetPreprocess(object):
     def __init__(self):
         self.random_sample_size = 256
         self.base_url = '/home/centos/audio-recognition/AudioSet'
-        self.music_files_limit = 15000
-        self.nonmusic_files_limit = 15000
+        self.music_files_limit = 22000
+        self.nonmusic_files_limit = 22000
         self.music_files_path = self.base_url + '/music'
         self.processed_music_files_path = self.base_url + '/processed/music'
         self.nonmusic_files_path = self.base_url + '/nonmusic'
@@ -22,12 +22,12 @@ class AudioSetPreprocess(object):
         #self.processed_nonmusic_files_path = self.base_url + '/processed/eval_nonmusic'
 
     def process_one_file(self, filename, class_list):
+        print(filename)
         y, sr = librosa.load(filename, sr=44100)
         if len(y) is 0:
             return None
         mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
         mfcc = mfcc.transpose()
-        print(filename)
         # For some samples the length is insufficient, just ignore them
         if len(mfcc) < self.random_sample_size:
             return None
@@ -69,16 +69,5 @@ class AudioSetPreprocess(object):
         #with open(self.base_url + '/eval_data.dat', 'wb') as fp:
             pickle.dump(processed_list, fp)
             librosa.cache.clear()
-
-class PreprocessTest(unittest.TestCase):
-
-    def __init__(self):
-        self.preprocess = AudioSetPreprocess()
-        self.test_files_dir = '/Users/rui.zhong/audio-recognition/test'
-        self.expected_list = pickle.load(open(self.test_files_dir + '/preprocess.result', 'rb'))
-
-    def test(self):
-        test_file = self.preprocess.process_one_file(self.test_files_dir + '/test_wav_file_01.wav', [1., 0.])
-        self.assertListEqual(test_file[0], self.expected_list)
 
 AudioSetPreprocess().persistance()
