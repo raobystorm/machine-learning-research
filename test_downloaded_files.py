@@ -28,6 +28,7 @@ with open('/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv
     read_csv_file(fp)
 
 for f in os.listdir(music_path):
+    print(f)
     if f not in music_set and f in nonmusic_set:
         print('Move nonmusic in music folder! %s' % f)
         os.rename(music_path + '/' + f, nonmusic_path + '/' + f)
