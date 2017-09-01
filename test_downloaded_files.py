@@ -40,7 +40,7 @@ for f in os.listdir(nonmusic_path):
     if f not in nonmusic_set and f in music_set:
         print('Move music in nonmusic folder! %s' % f)
         os.rename(nonmusic_path + '/' + f, music_path + '/' + f)
-    elif f in nonmusic_count:
+    elif f in nonmusic_set:
         nonmusic_count += 1
 
 print('music count is %d, and nonmusic count is %d' % (music_count, nonmusic_count))
