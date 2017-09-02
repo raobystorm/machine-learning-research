@@ -23,9 +23,12 @@ class AudioSetPreprocess(object):
 
     def process_one_file(self, filename, class_list):
         print(filename)
-        y, sr = librosa.load(filename, sr=44100)
-        if len(y) is 0:
-            return None
+        try:
+            y, sr = librosa.load(filename, sr=44100)
+            if len(y) is 0:
+                return None
+        except:
+            pass
         mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
         mfcc = mfcc.transpose()
         # For some samples the length is insufficient, just ignore them
