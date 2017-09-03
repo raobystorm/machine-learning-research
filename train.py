@@ -81,7 +81,7 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
+W_conv1 = weight_varible('W_conv1', [11, 11, 1, 48])
 b_conv1 = bias_variable('b_conv1', [48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
