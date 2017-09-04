@@ -34,7 +34,7 @@ class AudioSetPreprocess(object):
                 return None
             return [mfcc, class_list]
         except:
-            pass
+            return None
 
     def preprocess_batch(self, files_dir, limit, class_list, processed_dir):
         processed_list = []
@@ -65,12 +65,10 @@ class AudioSetPreprocess(object):
         return processed_list
 
     def persistance(self):
-        librosa.cache.clear()
         processed_list = self.preprocess()
         print(len(processed_list))
         with open(self.base_url + '/data.' + datetime.now().strftime('%s'), 'wb') as fp:
         #with open(self.base_url + '/eval_data.dat', 'wb') as fp:
             pickle.dump(processed_list, fp)
-            librosa.cache.clear()
 
 AudioSetPreprocess().persistance()
