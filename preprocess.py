@@ -21,59 +21,62 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
 
-def process_one_file(filename, class_list, q):
-    print(filename)
-    try:
-        y, sr = librosa.load(filename, sr=44100)
-        if len(y) is 0:
-            return
-        mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-        mfcc = mfcc.transpose()
-        # For some samples the length is insufficient, just ignore them
-        if len(mfcc) < random_sample_size:
-            return
-        q.put([mfcc, class_list])
-    except:
-        return
+def process_one_file(q):
+    while True:
+        job = q.get()
+        try:
+            y, sr = librosa.load(job.filename, sr=44100)
+            if len(y) is not 0:
+                mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                mfcc = mfcc.transpose()
+                # For some samples the length is insufficient, just ignore them
+                if len(mfcc) >= random_sample_size:
+                    job.output_q.put([mfcc, q.is_music])
+                    os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
+        except:
+            pass
 
 
-class Kicker(mp.Process):
-    def start(self, queue):
-        self.queue = queue
-
-    def run(self):
-        self.preprocess_batch(music_files_path, [1., 0.], processed_music_files_path, self.queue)
-        self.preprocess_batch(nonmusic_files_path, [0., 1.], processed_nonmusic_files_path, self.queue)
-
-    def preprocess_batch(files_dir, class_list, processed_dir, q):
-        print(1)
-        with mp.Pool(process=3) as pool:
-            for filename in os.listdir(files_dir):
-                pool.apply_async(process_one_file, (files_dir + '/' + filename, class_list, q,))
-                os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
-
+class Job(object):
+    def __init__(self, filename, file_path, processed_files_path, is_music, output_q):
+        self.filename = filename
+        self.is_music = is_music
+        self.file_path = file_path
+        self.processed_files_path = processed_files_path
+        self.output_q = output_q
 
 def main():
     manager = mp.Manager()
-    q = manager.Queue(1)
-    kicker = Kicker()
-    kicker.start(q)
-    persistance(q)
+    input_q = manager.Queue(1)
+    output_q = manager.Queue(1)
+    for filename in os.listdir(music_files_path):
+        input_q.put(Job(filename, music_files_path, processed_music_files_path, [1., 0.], output_q))
+
+    for filename in os.listdir(nonmusic_files_path):
+        input_q.put(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.], output_q))
+
+    with mp.Pool(process=4) as pool:
+        pool.apply_async(process_one_file, input_q)
+
+    persistance(output_q)
 
 def persistance(q):
-    count = 0
-    limit = 5000
-    while True:
+    limit = 4000
+    dump_list = []
+    while not q.empty():
         count = 0
-        dump_list = []
         while count < limit:
             with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                feature = q.get()
+                feature = q.get(False)
                 if len(feature[0]) >= 256:
                     dump_list.append(feature)
                     count += 1
         pickle.dump(dump_list, fp)
+
+    with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
+        if len(dump_list) is not 0:
+            pickle.dump(dump_list, fp)
 
 if __name__ == '__main__':
     main()
