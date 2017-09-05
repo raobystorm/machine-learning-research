@@ -25,13 +25,13 @@ def process_one_file(q):
     while True:
         job = q.get()
         try:
-            y, sr = librosa.load(job[1] + '/' + job[0]], sr=44100)
+            y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
             if len(y) is not 0:
                 mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
                 mfcc = mfcc.transpose()
                 # For some samples the length is insufficient, just ignore them
                 if len(mfcc) >= random_sample_size:
-                    job[4].put([mfcc, job[3])
+                    job[4].put([mfcc, job[3]])
                     os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
         except:
             pass
