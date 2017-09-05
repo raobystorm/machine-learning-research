@@ -22,6 +22,7 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 
 def process_one_file(filename, class_list, q):
+    print(filename)
     try:
         y, sr = librosa.load(filename, sr=44100)
         if len(y) is 0:
@@ -45,9 +46,10 @@ class Kicker(mp.Process):
         self.preprocess_batch(nonmusic_files_path, [0., 1.], processed_nonmusic_files_path, self.queue)
 
     def preprocess_batch(files_dir, class_list, processed_dir, q):
+        print(1)
         with mp.Pool(process=3) as pool:
             for filename in os.listdir(files_dir):
-                pool.apply_async(process_one_file, (files_dir + '/' + filename, class_list,q))
+                pool.apply_async(target=process_one_file, (files_dir + '/' + filename, class_list, q))
                 os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
 
 
