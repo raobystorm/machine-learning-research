@@ -27,10 +27,12 @@ manager = mp.Manager()
 input_q = manager.Queue()
 output_q = manager.Queue()
 
-def process_one_file(q):
-    while not q.empty():
-        job_ = q.get()
+def process_one_file():
+    while True:
+        job_ = input_q.get()
         job = dill.loads(job_)
+        if input_q.empty():
+            break;
         print('process file in queue:' % job.filename)
         try:
             y, sr = librosa.load(job.filename, sr=44100)
@@ -40,9 +42,9 @@ def process_one_file(q):
                 # For some samples the length is insufficient, just ignore them
                 if len(mfcc) >= random_sample_size:
                     if job.is_music:
-                        job.output_q.put([mfcc, [1., 0.]])
+                        output_q.put([mfcc, [1., 0.]])
                     else:
-                        job.output_q.put([mfcc, [0., 1.]])
+                        output_q.put([mfcc, [0., 1.]])
                     os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
         except:
             pass
@@ -65,13 +67,12 @@ def main():
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
 
-    with mp.Pool(process=4) as pool:
-        pool.apply_async(process_one_file, input_q)
+    with mp.Pool(processes=4) as pool:
+        pool.apply_async(process_one_file)
 
-    sleep()
-    persistance(output_q)
+    persistance()
 
-def persistance(q):
+def persistance():
     limit = 4000
     dump_list = []
     stop = False
@@ -83,7 +84,7 @@ def persistance(q):
         while count < limit:
             with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                feature = q.get()
+                feature = output_q.get()
                 if isinstance(feature, int):
                     stop = True
                     break
