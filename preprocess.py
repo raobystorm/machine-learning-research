@@ -22,6 +22,10 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
 
+manager = mp.Manager()
+input_q = manager.Queue(1)
+output_q = manager.Queue(1)
+
 def process_one_file(q):
     while not q.empty():
         job_ = q.get()
@@ -44,24 +48,20 @@ def process_one_file(q):
 
 
 class Job(object):
-    def __init__(self, filename, file_path, processed_files_path, is_music, output_q):
+    def __init__(self, filename, file_path, processed_files_path, is_music):
         self.filename = filename
         self.is_music = is_music
         self.file_path = file_path
         self.processed_files_path = processed_files_path
-        self.output_q = output_q
 
 def main():
-    manager = mp.Manager()
-    input_q = manager.Queue(1)
-    output_q = manager.Queue(1)
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True, output_q)))
+        input_q.put(Job(filename, music_files_path, processed_music_files_path, True))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q)))
+        input_q.put(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
