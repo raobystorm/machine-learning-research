@@ -1,6 +1,7 @@
 import os
 import librosa
 import pickle
+import dill
 from datetime import datetime
 
 import multiprocessing as mp
@@ -23,7 +24,8 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 def process_one_file(q):
     while True:
-        job = q.get()
+        job_ = q.get()
+        job = dill.loads(job_)
         try:
             y, sr = librosa.load(job.filename, sr=44100)
             if len(y) is not 0:
@@ -53,10 +55,10 @@ def main():
     input_q = manager.Queue(1)
     output_q = manager.Queue(1)
     for filename in os.listdir(music_files_path):
-        input_q.put((filename, music_files_path, processed_music_files_path, True, output_q))
+        input_q.put(dill.dumps(filename, music_files_path, processed_music_files_path, True, output_q))
 
     for filename in os.listdir(nonmusic_files_path):
-        input_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q))
+        input_q.put(dill.dumps(filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q))
 
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
@@ -75,7 +77,7 @@ def persistance(q):
                 if len(feature[0]) >= 256:
                     dump_list.append(feature)
                     count += 1
-        pickle.dump(dump_list, fp)
+        dill.dump(dump_list, fp)
 
     with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
         if len(dump_list) is not 0:
