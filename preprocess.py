@@ -29,7 +29,8 @@ output_q = manager.Queue()
 
 def process_one_file(q):
     while not q.empty():
-        job = q.get()
+        job_ = q.get()
+        job = dill.loads(job_)
         print('process file in queue:' % job.filename)
         try:
             y, sr = librosa.load(job.filename, sr=44100)
@@ -58,7 +59,7 @@ class Job(object):
 def main():
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        input_q.put(Job(filename, music_files_path, processed_music_files_path, True))
+        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
