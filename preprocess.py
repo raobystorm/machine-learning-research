@@ -3,6 +3,7 @@ import librosa
 import pickle
 import dill
 from datetime import datetime
+import time
 
 import multiprocessing as mp
 
@@ -23,13 +24,12 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 
 manager = mp.Manager()
-input_q = manager.Queue(1)
-output_q = manager.Queue(1)
+input_q = manager.Queue()
+output_q = manager.Queue()
 
 def process_one_file(q):
     while not q.empty():
-        job_ = q.get()
-        job = dill.loads(job_)
+        job = q.get()
         print('process file in queue:' % job.filename)
         try:
             y, sr = librosa.load(job.filename, sr=44100)
@@ -45,7 +45,8 @@ def process_one_file(q):
                     os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
         except:
             pass
-
+    if q.empty():
+        output_q.put(int(-1))
 
 class Job(object):
     def __init__(self, filename, file_path, processed_files_path, is_music):
@@ -57,7 +58,7 @@ class Job(object):
 def main():
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
+        input_q.put(Job(filename, music_files_path, processed_music_files_path, True))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
@@ -66,26 +67,30 @@ def main():
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
 
+    sleep()
     persistance(output_q)
 
 def persistance(q):
     limit = 4000
     dump_list = []
+    stop = False
     print('process output queue!')
-    while not q.empty():
+    while True:
         count = 0
+        if stop:
+            break
         while count < limit:
             with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                feature = q.get(False)
+                feature = q.get()
+                if isinstance(feature, int):
+                    stop = True
+                    break
                 if len(feature[0]) >= 256:
                     dump_list.append(feature)
                     count += 1
         dill.dump(dump_list, fp)
 
-    with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
-        if len(dump_list) is not 0:
-            pickle.dump(dump_list, fp)
 
 if __name__ == '__main__':
     main()
