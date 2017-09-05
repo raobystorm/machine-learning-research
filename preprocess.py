@@ -57,11 +57,11 @@ class Job(object):
 def main():
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        input_q.put(Job(filename, music_files_path, processed_music_files_path, True))
+        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        input_q.put(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
+        input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
 
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
