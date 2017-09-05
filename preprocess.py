@@ -25,26 +25,38 @@ def process_one_file(q):
     while True:
         job = q.get()
         try:
-            y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
+            y, sr = librosa.load(job.filename, sr=44100)
             if len(y) is not 0:
                 mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
                 mfcc = mfcc.transpose()
                 # For some samples the length is insufficient, just ignore them
                 if len(mfcc) >= random_sample_size:
-                    job[4].put([mfcc, job[3]])
-                    os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
+                    if job.is_music:
+                        job.output_q.put([mfcc, [1., 0.]])
+                    else:
+                        job.output_q.put([mfcc, [0., 1.]])
+                    os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
         except:
             pass
+
+
+class Job(object):
+    def __init__(self, filename, file_path, processed_files_path, is_music, output_q):
+        self.filename = filename
+        self.is_music = is_music
+        self.file_path = file_path
+        self.processed_files_path = processed_files_path
+        self.output_q = output_q
 
 def main():
     manager = mp.Manager()
     input_q = manager.Queue(1)
     output_q = manager.Queue(1)
     for filename in os.listdir(music_files_path):
-        input_q.put((filename, music_files_path, processed_music_files_path, [1., 0.], output_q))
+        input_q.put((filename, music_files_path, processed_music_files_path, True, output_q))
 
     for filename in os.listdir(nonmusic_files_path):
-        input_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.], output_q))
+        input_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q))
 
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
