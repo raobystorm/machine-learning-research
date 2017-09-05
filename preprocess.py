@@ -49,7 +49,7 @@ class Kicker(mp.Process):
         print(1)
         with mp.Pool(process=3) as pool:
             for filename in os.listdir(files_dir):
-                pool.apply_async(target=process_one_file, (files_dir + '/' + filename, class_list, q))
+                pool.apply_async(target=process_one_file, (files_dir + '/' + filename, class_list, q,))
                 os.rename(files_dir + '/' + filename, processed_dir + '/' + filename)
 
 
