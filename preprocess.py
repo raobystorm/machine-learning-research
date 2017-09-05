@@ -55,10 +55,10 @@ def main():
     input_q = manager.Queue(1)
     output_q = manager.Queue(1)
     for filename in os.listdir(music_files_path):
-        input_q.put(dill.dumps(filename, music_files_path, processed_music_files_path, True, output_q))
+        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True, output_q)))
 
     for filename in os.listdir(nonmusic_files_path):
-        input_q.put(dill.dumps(filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q))
+        input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False, output_q)))
 
     with mp.Pool(process=4) as pool:
         pool.apply_async(process_one_file, input_q)
