@@ -54,7 +54,7 @@ def f_init(q):
 def main():
 
     cpus = mp.cpu_count()
-    q = mp.Manager.Queue()
+    q = mp.Manager().Queue()
 
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
@@ -64,8 +64,9 @@ def main():
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
-    with mp.Pool(cpus, f_init, [q]) as pool:
-        pool.map(f, job_list)
+    pool = mp.Pool(cpus, f_init, [q])
+    pool.imap(f, job_list)
+    pool.close()
 
     q.put(int(-1))
     persistance(q)
