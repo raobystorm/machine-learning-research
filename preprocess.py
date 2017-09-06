@@ -23,14 +23,12 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
 
-input_q = mp.Queue()
-output_q = mp.Queue()
-
-def process_one_file():
-    with open(base_url + '/process_log.' + datetime.now().strftime('%s'), 'wb') as fp:
+def process_one_file(job_):
+    print('test')
+    """with open(base_url + '/process_log.' + datetime.now().strftime('%s'), 'wb') as fp:
         while True:
-            job_ = input_q.get()
             job = dill.loads(job_)
+
             if input_q.empty():
                 break;
             fp.write('process file in queue: %s' % job.filename)
@@ -50,7 +48,7 @@ def process_one_file():
                 pass
 
     if q.empty():
-        output_q.put(int(-1))
+        output_q.put(int(-1))"""
 
 class Job(object):
     def __init__(self, filename, file_path, processed_files_path, is_music):
@@ -59,8 +57,11 @@ class Job(object):
         self.file_path = file_path
         self.processed_files_path = processed_files_path
 
+
 def main():
 
+    input_q = mp.Queue()
+    output_q = mp.Queue()
     pool = mp.Pool()
     cpus = mp.cpu_count()
 
@@ -77,8 +78,8 @@ def main():
         result = pool.apply_async(process_one_file)
         results.append(result)
 
-    pool.close()
     pool.join()
+    pool.close()
     persistance()
 
 def persistance():
