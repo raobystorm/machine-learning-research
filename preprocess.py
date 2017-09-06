@@ -66,10 +66,12 @@ def main():
 
     pool = mp.Pool(cpus, f_init, [q])
     pool.imap(f, job_list)
-    pool.close()
 
     q.put(int(-1))
     persistance(q)
+
+    pool.close()
+
 
 def persistance(q):
     limit = 4000
