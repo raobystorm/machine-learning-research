@@ -59,17 +59,26 @@ class Job(object):
         self.processed_files_path = processed_files_path
 
 def main():
-    with mp.Pool(processes=4) as pool:
-        for filename in os.listdir(music_files_path):
-            print('into input queue: %s' % music_files_path + '/' + filename)
-            input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
 
-        for filename in os.listdir(nonmusic_files_path):
-            print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-            input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
+    pool = mp.Pool()
+    cpus = mp.cpu_count()
 
-        pool.apply_async(process_one_file)
-        persistance()
+    for filename in os.listdir(music_files_path):
+        print('into input queue: %s' % music_files_path + '/' + filename)
+        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
+
+    for filename in os.listdir(nonmusic_files_path):
+        print('into input queue: %s' % nonmusic_files_path + '/' + filename)
+        input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
+
+    results = []
+    for i in xrange(0, cpus):
+        result = pool.apply_async(process_one_file)
+        results.append(result)
+
+    pool.close()
+    pool.join()
+    persistance()
 
 def persistance():
     limit = 4000
