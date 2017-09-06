@@ -23,31 +23,32 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
 
-manager = mp.Manager()
-input_q = manager.Queue()
-output_q = manager.Queue()
+input_q = mp.Queue()
+output_q = mp.Queue()
 
 def process_one_file():
-    while True:
-        job_ = input_q.get()
-        job = dill.loads(job_)
-        if input_q.empty():
-            break;
-        print('process file in queue:' % job.filename)
-        try:
-            y, sr = librosa.load(job.filename, sr=44100)
-            if len(y) is not 0:
-                mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-                mfcc = mfcc.transpose()
-                # For some samples the length is insufficient, just ignore them
-                if len(mfcc) >= random_sample_size:
-                    if job.is_music:
-                        output_q.put([mfcc, [1., 0.]])
-                    else:
-                        output_q.put([mfcc, [0., 1.]])
-                    os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
-        except:
-            pass
+    with open(base_url + '/process_log.' + datetime.now().strftime('%s'), 'wb') as fp:
+        while True:
+            job_ = input_q.get()
+            job = dill.loads(job_)
+            if input_q.empty():
+                break;
+            fp.write('process file in queue: %s' % job.filename)
+            try:
+                y, sr = librosa.load(job.filename, sr=44100)
+                if len(y) is not 0:
+                    mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                    mfcc = mfcc.transpose()
+                    # For some samples the length is insufficient, just ignore them
+                    if len(mfcc) >= random_sample_size:
+                        if job.is_music:
+                            output_q.put([mfcc, [1., 0.]])
+                        else:
+                            output_q.put([mfcc, [0., 1.]])
+                        os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
+            except:
+                pass
+
     if q.empty():
         output_q.put(int(-1))
 
@@ -72,7 +73,7 @@ def main():
         input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
 
     results = []
-    for i in xrange(0, cpus):
+    for i in range(0, cpus):
         result = pool.apply_async(process_one_file)
         results.append(result)
 
