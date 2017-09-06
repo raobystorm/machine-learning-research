@@ -67,29 +67,29 @@ def main():
     with mp.Pool(cpus, f_init, [q]) as pool:
         pool.map(f, job_list)
 
-    output_q.put(int(-1))
-    persistance()
+    q.put(int(-1))
+    persistance(q)
 
-def persistance():
+def persistance(q):
     limit = 4000
     dump_list = []
     stop = False
-    print('process output queue!')
-    while True:
-        count = 0
-        if stop:
-            break
-        while count < limit:
-            with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
-            #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                feature = output_q.get()
-                if isinstance(feature, int):
-                    stop = True
-                    break
-                if len(feature[0]) >= 256:
-                    dump_list.append(feature)
-                    count += 1
-        dill.dump(dump_list, fp)
+    print('process queue!')
+    with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
+        while True:
+            count = 0
+            if stop:
+                break
+            while count < limit:
+                #with open(base_url + '/eval_data.dat', 'wb') as fp:
+                    feature = q.get()
+                    if isinstance(feature, int):
+                        stop = True
+                        break
+                    if len(feature[0]) >= 256:
+                        dump_list.append(feature)
+                        count += 1
+            dill.dump(dump_list, fp)
 
 
 if __name__ == '__main__':
