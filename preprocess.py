@@ -64,6 +64,7 @@ def main():
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
+    q.put(job_list[0])
     pool = mp.Pool(cpus, f_init, [q])
     pool.imap(f, job_list)
 
