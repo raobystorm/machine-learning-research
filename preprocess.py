@@ -23,9 +23,8 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
 job_list = []
-output_q = mp.Queue()
 
-def process_one_file(job):
+def f(job):
     try:
         import librosa
         y, sr = librosa.load(job.filename, sr=44100)
@@ -35,9 +34,9 @@ def process_one_file(job):
             # For some samples the length is insufficient, just ignore them
             if len(mfcc) >= random_sample_size:
                 if job.is_music:
-                    job.queue.put([mfcc, [1., 0.]])
+                    f.q.put([mfcc, [1., 0.]])
                 else:
-                    job.queue.put([mfcc, [0., 1.]])
+                    f.q.put([mfcc, [0., 1.]])
                 os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
     except:
         pass
@@ -48,12 +47,14 @@ class Job(object):
         self.is_music = is_music
         self.file_path = file_path
         self.processed_files_path = processed_files_path
-        self.queue = output_q
 
+def f_init(q):
+    f.q = q
 
 def main():
 
     cpus = mp.cpu_count()
+    q = mp.Manager.Queue()
 
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
@@ -63,8 +64,8 @@ def main():
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
-    with mp.Pool(processes=cpus) as pool:
-        pool.map(process_one_file, job_list)
+    with mp.Pool(cpus, f_init, [q]) as pool:
+        pool.map(f, job_list)
 
     output_q.put(int(-1))
     persistance()
