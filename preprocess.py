@@ -22,33 +22,25 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 #nonmusic_files_path = base_url + '/eval_nonmusic'
 #processed_nonmusic_files_path = base_url + '/processed/eval_nonmusic'
 
+job_list = []
+output_q = mp.Queue()
 
-def process_one_file(job_):
-    print('test')
-    """with open(base_url + '/process_log.' + datetime.now().strftime('%s'), 'wb') as fp:
-        while True:
-            job = dill.loads(job_)
-
-            if input_q.empty():
-                break;
-            fp.write('process file in queue: %s' % job.filename)
-            try:
-                y, sr = librosa.load(job.filename, sr=44100)
-                if len(y) is not 0:
-                    mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-                    mfcc = mfcc.transpose()
-                    # For some samples the length is insufficient, just ignore them
-                    if len(mfcc) >= random_sample_size:
-                        if job.is_music:
-                            output_q.put([mfcc, [1., 0.]])
-                        else:
-                            output_q.put([mfcc, [0., 1.]])
-                        os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
-            except:
-                pass
-
-    if q.empty():
-        output_q.put(int(-1))"""
+def process_one_file(job):
+    try:
+        import librosa
+        y, sr = librosa.load(job.filename, sr=44100)
+        if len(y) is not 0:
+            mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+            mfcc = mfcc.transpose()
+            # For some samples the length is insufficient, just ignore them
+            if len(mfcc) >= random_sample_size:
+                if job.is_music:
+                    job.queue.put([mfcc, [1., 0.]])
+                else:
+                    job.queue.put([mfcc, [0., 1.]])
+                os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
+    except:
+        pass
 
 class Job(object):
     def __init__(self, filename, file_path, processed_files_path, is_music):
@@ -56,30 +48,25 @@ class Job(object):
         self.is_music = is_music
         self.file_path = file_path
         self.processed_files_path = processed_files_path
+        self.queue = output_q
 
 
 def main():
 
-    input_q = mp.Queue()
-    output_q = mp.Queue()
-    pool = mp.Pool()
     cpus = mp.cpu_count()
 
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        input_q.put(dill.dumps(Job(filename, music_files_path, processed_music_files_path, True)))
+        job_list.append(Job(filename, music_files_path, processed_music_files_path, True))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        input_q.put(dill.dumps(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False)))
+        job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
-    results = []
-    for i in range(0, cpus):
-        result = pool.apply_async(process_one_file)
-        results.append(result)
+    with mp.Pool(processes=cpus) as pool:
+        pool.map(process_one_file, job_list)
 
-    pool.join()
-    pool.close()
+    output_q.put(int(-1))
     persistance()
 
 def persistance():
