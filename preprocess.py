@@ -53,7 +53,6 @@ def f_init(q):
 
 def main():
 
-    cpus = mp.cpu_count()
     q = mp.Manager().Queue()
 
     for filename in os.listdir(music_files_path):
@@ -65,10 +64,12 @@ def main():
         job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
     q.put(job_list[0])
-    pool = mp.Pool(cpus, f_init, [q])
+    pool = mp.Pool(None, f_init, [q])
     pool.imap(f, job_list)
 
-    q.put(int(-1))
+    pool.close()
+    pool.join()
+
     persistance(q)
 
     pool.close()
