@@ -26,6 +26,7 @@ job_list = []
 
 def f(job):
     try:
+        print('process %s' % job.filename)
         import librosa
         y, sr = librosa.load(job.filename, sr=44100)
         if len(y) is not 0:
@@ -63,16 +64,16 @@ def main():
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
 
-    q.put(job_list[0])
     pool = mp.Pool(None, f_init, [q])
-    pool.imap(f, job_list)
+
+    for job in job_list:
+        pool.apply_async(f, [job])
 
     pool.close()
     pool.join()
 
     persistance(q)
 
-    pool.close()
 
 
 def persistance(q):
