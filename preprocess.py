@@ -83,7 +83,7 @@ def persistance(q):
                 break
             while count < limit:
                 #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                feature = await q.get()
+                feature = q.get()
                 print('get no.%g feature' % count)
                 if feature is None:
                     stop = True
