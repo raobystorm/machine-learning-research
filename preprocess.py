@@ -29,12 +29,12 @@ async def consume(in_q, out_q):
     while True:
         job = await in_q.get()
         print('process %s' % job[0])
-        #y, sr = await librosa.load(job[0], sr=44100)
+        y, sr = librosa.load(job[0], sr=44100)
         y = np.random.rand(800, 64)
         if len(y) is not 0:
-            #mfcc = await librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-            mfcc = np.random.rand(512, 64)
-            # mfcc = mfcc.transpose()
+            mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+            #mfcc = np.random.rand(512, 64)
+            mfcc = mfcc.transpose()
             # For some samples the length is insufficient, just ignore them
             if len(mfcc) >= random_sample_size:
                 os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
@@ -69,9 +69,9 @@ async def run():
     await produce(in_q)
     await in_q.join()
     consumer.cancel()
-    await persistance(out_q)
+    persistance(out_q)
 
-async def persistance(q):
+def persistance(q):
     limit = 4000
     dump_list = []
     stop = False
