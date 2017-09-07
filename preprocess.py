@@ -30,9 +30,11 @@ async def consume(in_q, out_q):
         try:
             job = await in_q.get()
             print('process %s' % job[0])
-            y, sr = await librosa.load(job[0], sr=44100)
+            #y, sr = await librosa.load(job[0], sr=44100)
+            y = np.random.rand(800,64)
             if len(y) is not 0:
-                mfcc = await librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                #mfcc = await librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                mfcc = np.random(512, 64)
                 mfcc = mfcc.transpose()
                 print(len(mfcc))
                 # For some samples the length is insufficient, just ignore them
