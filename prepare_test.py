@@ -24,9 +24,9 @@ with open(csv_file, 'r') as cf:
             if len(mfcc) >= random_sample_size:
                 print('file size of %s is %g * 64' % (filename, len(mfcc)))
                 if is_music == 1:
-                    proc_list.append([mfcc, [0., 1.]])
-                else:
                     proc_list.append([mfcc, [1., 0.]])
+                else:
+                    proc_list.append([mfcc, [0., 1.]])
 
 print(len(proc_list))
 

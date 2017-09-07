@@ -24,56 +24,58 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 job_list = []
 
-def f(job):
-    try:
-        print('process %s' % job.filename)
-        import librosa
-        y, sr = librosa.load(job.filename, sr=44100)
-        if len(y) is not 0:
-            mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-            mfcc = mfcc.transpose()
-            # For some samples the length is insufficient, just ignore them
-            if len(mfcc) >= random_sample_size:
-                if job.is_music:
-                    f.q.put([mfcc, [1., 0.]])
-                else:
-                    f.q.put([mfcc, [0., 1.]])
-                os.rename(job.file_path + '/' + job.filename, job.processed_files_path + '/' + job.filename)
-    except:
-        pass
+def consume(in_q, out_q):
+    while True:
+        try:
+            job = in_q.get()
+            if job is None:
+                break
+            print('process %s' % job[0])
+            y, sr = librosa.load(job[0], sr=44100)
+            if len(y) is not 0:
+                mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                mfcc = mfcc.transpose()
+                # For some samples the length is insufficient, just ignore them
+                if len(mfcc) >= random_sample_size:
+                    os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
+                    out_q.put([mfcc, job[3]])
+        except:
+            pass
 
+"""
 class Job(object):
     def __init__(self, filename, file_path, processed_files_path, is_music):
         self.filename = filename
         self.is_music = is_music
         self.file_path = file_path
         self.processed_files_path = processed_files_path
-
-def f_init(q):
-    f.q = q
+"""
 
 def main():
 
-    q = mp.Manager().Queue()
+    in_q = mp.Queue()
+    out_q = mp.Queue()
 
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        job_list.append(Job(filename, music_files_path, processed_music_files_path, True))
+        await in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        job_list.append(Job(filename, nonmusic_files_path, processed_nonmusic_files_path, False))
+        await in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
-    pool = mp.Pool(None, f_init, [q])
+    workers = [mp.Process(target=consume, args=(in_q, out_q,)) for i in range(4)]
 
-    for job in job_list:
-        pool.apply_async(f, [job])
+    for i in workers:
+        i.start()
 
-    pool.close()
-    pool.join()
+    for i in wokers:
+        in_q.put(None)
 
-    persistance(q)
+    wait(workers)
+    out_q.put(None)
 
+    persistance(out_q)
 
 
 def persistance(q):
@@ -81,15 +83,15 @@ def persistance(q):
     dump_list = []
     stop = False
     print('process queue!')
-    with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
-        while True:
+    while True:
+        with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             count = 0
             if stop:
                 break
             while count < limit:
                 #with open(base_url + '/eval_data.dat', 'wb') as fp:
                     feature = q.get()
-                    if isinstance(feature, int):
+                    if feature is None:
                         stop = True
                         break
                     if len(feature[0]) >= 256:
