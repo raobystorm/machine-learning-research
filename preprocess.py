@@ -30,15 +30,15 @@ async def consume(in_q, out_q):
         try:
             job = await in_q.get()
             print('process %s' % job[0])
-            y, sr = librosa.load(job[0], sr=44100)
+            y, sr = await librosa.load(job[0], sr=44100)
             if len(y) is not 0:
-                mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                mfcc = await librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
                 mfcc = mfcc.transpose()
                 print(len(mfcc))
                 # For some samples the length is insufficient, just ignore them
                 if len(mfcc) >= random_sample_size:
-                    os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
-                    out_q.put([mfcc, job[3]])
+                    await os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
+                    await out_q.put([mfcc, job[3]])
                     print('%s has been processed' % job[0])
         except:
             pass
@@ -71,28 +71,28 @@ async def run():
     await produce(in_q)
     await in_q.join()
     consumer.cancel()
-    persistance(out_q)
+    await persistance(out_q)
 
-def persistance(q):
+async def persistance(q):
     limit = 4000
     dump_list = []
     stop = False
     print('process queue!')
     while True:
-        with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
+        await with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             count = 0
             if stop:
                 break
             while count < limit:
                 #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                    feature = q.get()
+                    await feature = q.get()
                     if feature is None:
                         stop = True
                         break
                     if len(feature[0]) >= 256:
-                        dump_list.append(feature)
+                        await dump_list.append(feature)
                         count += 1
-            dill.dump(dump_list, fp)
+            await dill.dump(dump_list, fp)
 
 
 loop = asyncio.get_event_loop()
