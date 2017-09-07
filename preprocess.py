@@ -30,15 +30,14 @@ async def consume(in_q, out_q):
         job = await in_q.get()
         print('process %s' % job[0])
         #y, sr = await librosa.load(job[0], sr=44100)
-        y = np.random.rand(800,64)
+        y = np.random.rand(800, 64)
         if len(y) is not 0:
             #mfcc = await librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
             mfcc = np.random.rand(512, 64)
-            mfcc = mfcc.transpose()
-            print(len(mfcc))
+            # mfcc = mfcc.transpose()
             # For some samples the length is insufficient, just ignore them
             if len(mfcc) >= random_sample_size:
-                await os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
+                os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
                 await out_q.put([mfcc, job[3]])
                 print('%s has been processed' % job[0])
 
@@ -77,21 +76,22 @@ async def persistance(q):
     dump_list = []
     stop = False
     print('process queue!')
-    while True:
+    while not q.empty():
         with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             count = 0
             if stop:
                 break
             while count < limit:
                 #with open(base_url + '/eval_data.dat', 'wb') as fp:
-                    feature = await q.get()
-                    if feature is None:
-                        stop = True
-                        break
-                    if len(feature[0]) >= 256:
-                        await dump_list.append(feature)
-                        count += 1
-            await dill.dump(dump_list, fp)
+                feature = await q.get()
+                print('get no.%g feature' % count)
+                if feature is None:
+                    stop = True
+                    break
+                if len(feature[0]) >= 256:
+                    dump_list.append(feature)
+                    count += 1
+            dill.dump(dump_list, fp)
 
 
 loop = asyncio.get_event_loop()
