@@ -32,6 +32,7 @@ def consume(in_q, out_q):
                 break
             print('process %s' % job[0])
             y, sr = librosa.load(job[0], sr=44100)
+            print(len(y))
             if len(y) is not 0:
                 mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
                 mfcc = mfcc.transpose()
@@ -58,11 +59,11 @@ def main():
 
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        await in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
+        in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        await in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
+        in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
     workers = [mp.Process(target=consume, args=(in_q, out_q,)) for i in range(4)]
 
