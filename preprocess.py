@@ -29,8 +29,8 @@ def consume(in_q, out_q):
     while True:
         try:
             job = in_q.get()
-            if job is None:
-                break
+            if job is isinstance(-1, int):
+                return
             print('process %s' % job[0])
             #y, sr = librosa.load(job[0], sr=44100)
             y = np.random.rand(800, 64)
@@ -41,6 +41,7 @@ def consume(in_q, out_q):
                 if len(mfcc) >= random_sample_size:
                     os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
                     out_q.put([mfcc, job[3]])
+                    print('%s has been processed' % job[0])
         except:
             pass
 
@@ -71,8 +72,8 @@ def main():
     for i in workers:
         i.start()
 
-    for i in wokers:
-        in_q.put(None)
+    for i in range(10):
+        in_q.put(int(-1))
 
     wait(workers)
     out_q.put(None)
