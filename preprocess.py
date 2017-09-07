@@ -6,7 +6,7 @@ import dill
 from datetime import datetime
 import time
 
-import multiprocessing as mp
+import asyncio
 
 random_sample_size = 256
 base_url = '/home/centos/audio-recognition/AudioSet'
@@ -25,7 +25,7 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 job_list = []
 
-def consume(in_q, out_q):
+async def consume(in_q, out_q):
     while True:
         try:
             job = in_q.get()
@@ -55,32 +55,26 @@ class Job(object):
         self.processed_files_path = processed_files_path
 """
 
-def main():
-
-    in_q = mp.Queue()
-    out_q = mp.Queue()
-
+async def produce(in_q):
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
+        await in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
+        await in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
-    workers = [mp.Process(target=consume, args=(in_q, out_q,)) for i in range(4)]
+async def run():
 
-    for i in workers:
-        i.start()
+    in_q = asyncio.LifoQueue()
+    out_q = asyncio.LifoQueue()
 
-    for i in range(10):
-        in_q.put(int(-1))
+    consumer = asyncio.ensure_future(consume(in_q, out_q))
 
-    wait(workers)
-    out_q.put(None)
-
+    await produce(in_q)
+    await in_q.join()
+    consumer.cancel()
     persistance(out_q)
-
 
 def persistance(q):
     limit = 4000
@@ -104,5 +98,6 @@ def persistance(q):
             dill.dump(dump_list, fp)
 
 
-if __name__ == '__main__':
-    main()
+loop = asyncio.get_event_loop()
+loop.run_until_complete(run())
+loop.close()
