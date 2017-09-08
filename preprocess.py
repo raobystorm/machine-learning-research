@@ -66,13 +66,20 @@ def main():
 
     produce(in_q)
 
-    [in_q.put(None) for i in range(4)]
+    for _ in range(4):
+        in_q.put(None)
 
-    procs = [mp.Process(target=consume, args=(in_q, out_q, )) for i in range(4)]
-    [proc.start() for proc in procs]
+    procs = []
+    for _ in range(4):
+        p = mp.Process(target=consume, args=(in_q, out_q,))
+        p.start()
+        procs.append(p)
+
     in_q.join()
 
-    [proc.join() for proc in procs]
+    for p in procs:
+        p.join()
+
     out_q.put(None)
     persistance(out_q)
 
