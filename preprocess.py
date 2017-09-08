@@ -30,7 +30,7 @@ async def consume(in_q, out_q):
         job = await in_q.get()
         print('process %s' % job[0])
         # y, sr = librosa.load(job[0], sr=44100)
-        y = np.random.rand(800, 64)
+        y = np.random.rand(381888)
         if len(y) is not 0:
             mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
             #mfcc = np.random.rand(512, 64)
