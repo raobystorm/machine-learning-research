@@ -52,11 +52,13 @@ class Job(object):
 
 def produce(in_q):
     for filename in os.listdir(music_files_path):
-        print('into input queue: %s' % music_files_path + '/' + filename)
+        filename =  music_files_path + '/' + filename
+        print('into input queue: %s' % filename)
         in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
-        print('into input queue: %s' % nonmusic_files_path + '/' + filename)
+        filename = nonmusic_files_path + '/' + filename
+        print('into input queue: %s' % filename)
         in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
 def main():
