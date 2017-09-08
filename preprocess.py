@@ -1,12 +1,11 @@
 import os
 import librosa
-import pickle
 import numpy as np
 import dill
 from datetime import datetime
 import time
 
-import asyncio
+import multiprocessing as mp
 
 random_sample_size = 256
 base_url = '/home/centos/audio-recognition/AudioSet'
@@ -25,20 +24,21 @@ processed_nonmusic_files_path = base_url + '/processed/nonmusic'
 
 job_list = []
 
-async def consume(in_q, out_q):
+def consume(in_q, out_q):
     while True:
-        job = await in_q.get()
+        job = in_q.get()
+        if job is None:
+            break
         print('process %s' % job[0])
         # y, sr = librosa.load(job[0], sr=44100)
         y = np.random.rand(381888)
         if len(y) is not 0:
             mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-            #mfcc = np.random.rand(512, 64)
             mfcc = mfcc.transpose()
             # For some samples the length is insufficient, just ignore them
             if len(mfcc) >= random_sample_size:
                 os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
-                await out_q.put([mfcc, job[3]])
+                out_q.put([mfcc, job[3]])
                 print('%s has been processed' % job[0])
 
 """
@@ -50,25 +50,30 @@ class Job(object):
         self.processed_files_path = processed_files_path
 """
 
-async def produce(in_q):
+def produce(in_q):
     for filename in os.listdir(music_files_path):
         print('into input queue: %s' % music_files_path + '/' + filename)
-        await in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
+        in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
         print('into input queue: %s' % nonmusic_files_path + '/' + filename)
-        await in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
+        in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
-async def run():
+def main():
 
-    in_q = asyncio.LifoQueue()
-    out_q = asyncio.LifoQueue()
+    in_q = mp.Queue()
+    out_q = mp.Queue()
 
-    consumer = asyncio.ensure_future(consume(in_q, out_q))
+    produce(in_q)
 
-    await produce(in_q)
-    await in_q.join()
-    consumer.cancel()
+    [in_q.put(None) for i in range(4)]
+
+    procs = [mp.Process(target=consume, args=(in_q, out_q, )) for i in range(4)]
+    [proc.start() for proc in procs]
+    in_q.join()
+
+    [proc.join() for proc in procs]
+    out_q.put(None)
     persistance(out_q)
 
 def persistance(q):
@@ -76,7 +81,7 @@ def persistance(q):
     dump_list = []
     stop = False
     print('process queue!')
-    while not q.empty():
+    while True:
         with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             count = 0
             if stop:
@@ -93,7 +98,5 @@ def persistance(q):
                     count += 1
             dill.dump(dump_list, fp)
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(run())
-loop.close()
+if __name__ == '__main__':
+    main()
