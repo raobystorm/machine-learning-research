@@ -75,16 +75,18 @@ def main():
         p.start()
         procs.append(p)
 
+    write_proc = mp.Process(target=persistance, args=(out_q,))
+    write_proc.start()
+    procs.append(write_proc)
+
     in_q.join()
+    out_q.put(None)
 
     for p in procs:
         p.join()
 
-    out_q.put(None)
-    persistance(out_q)
-
 def persistance(q):
-    limit = 4000
+    limit = 2000
     dump_list = []
     stop = False
     print('process queue!')
@@ -103,6 +105,10 @@ def persistance(q):
                 if len(feature[0]) >= 256:
                     dump_list.append(feature)
                     count += 1
+            dill.dump(dump_list, fp)
+
+    if len(dump_list) is not 0:
+        with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             dill.dump(dump_list, fp)
 
 if __name__ == '__main__':
