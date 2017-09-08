@@ -30,8 +30,8 @@ def consume(in_q, out_q):
         if job is None:
             break
         print('process %s' % job[0])
-        # y, sr = librosa.load(job[0], sr=44100)
-        y = np.random.rand(381888)
+        y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
+        # y = np.random.rand(381888)
         if len(y) is not 0:
             mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
             mfcc = mfcc.transpose()
@@ -52,13 +52,11 @@ class Job(object):
 
 def produce(in_q):
     for filename in os.listdir(music_files_path):
-        filename =  music_files_path + '/' + filename
-        print('into input queue: %s' % filename)
+        print('into input queue: %s' % music_files_path + '/' + filename)
         in_q.put((filename, music_files_path, processed_music_files_path, [1., 0.]))
 
     for filename in os.listdir(nonmusic_files_path):
-        filename = nonmusic_files_path + '/' + filename
-        print('into input queue: %s' % filename)
+        print('into input queue: %s' % nonmusic_files_path + '/' + filename)
         in_q.put((filename, nonmusic_files_path, processed_nonmusic_files_path, [0., 1.]))
 
 def main():
