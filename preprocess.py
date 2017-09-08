@@ -31,7 +31,6 @@ def consume(in_q, out_q):
             break
         print('process %s' % job[0])
         y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
-        # y = np.random.rand(381888)
         if len(y) is not 0:
             mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
             mfcc = mfcc.transpose()
@@ -39,6 +38,7 @@ def consume(in_q, out_q):
             if len(mfcc) >= random_sample_size:
                 os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
                 out_q.put([mfcc, job[3]])
+                in_q.task_done()
                 print('%s has been processed' % job[0])
 
 """
@@ -61,7 +61,7 @@ def produce(in_q):
 
 def main():
 
-    in_q = mp.Queue()
+    in_q = mp.JoinableQueue()
     out_q = mp.Queue()
 
     produce(in_q)
