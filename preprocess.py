@@ -3,6 +3,7 @@ import librosa
 import numpy as np
 import dill
 from datetime import datetime
+from audioread import NoBackendError
 import time
 
 import multiprocessing as mp
@@ -41,10 +42,10 @@ def consume(in_q, out_q):
                     out_q.put([mfcc, job[3]])
                     in_q.task_done()
                     print('%s has been processed' % job[0])
-        except NoBackEndError:
-            pass
+        except NoBackendError:
+            in_q.task_done()
         except EOFError:
-            pass
+            in_q.task_done()
 
 def produce(in_q):
     for filename in os.listdir(music_files_path):
