@@ -3,7 +3,9 @@ import numpy as np
 import os
 import time
 import librosa
+import dill
 import pickle
+import glob
 import random
 
 n_input = 256 * 64
@@ -19,10 +21,10 @@ print('max_iter: %d' % max_iter)
 print('batch_size: %d' % batch_size)
 print('random_sample_size: %d' % random_sample_size)
 
-model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
+model_save_path = 'AudioSet/model.ckpt'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.1504446639'
-eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
+data_files_path = 'AudioSet/'
+eval_data_file = 'test/test_medium/eval.prod.dat'
 
 def random_sample(data_batch):
     data_list = []
@@ -56,6 +58,19 @@ def load_data(file):
             data[1] = np.asarray(data[1])
             data[1] = data[1].astype(np.float32)
         return data_block
+
+def load_data_files_from_path(path):
+    files = glob.glob(data_files_path + '/data.clip*')
+    data_block = []
+    for f in files:
+        with open(f, 'rb') as fp:
+            data = dill.load(fp)
+            data_block.extend(data)
+    for data in data_block:
+        data[0] = data[0].astype(np.float32)
+        data[1] = np.asarray(data[1])
+        data[1] = data[1].astype(np.float32)
+    return data_block
 
 sess = tf.InteractiveSession()
 
@@ -152,7 +167,7 @@ correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
-    data_ = load_data(data_file)
+    data_ = load_data_files_from_path(data_files_path)
     random.shuffle(data_)
     test_data = load_data(eval_data_file)
     max_accuracy = 0.0
