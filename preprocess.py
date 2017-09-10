@@ -26,29 +26,25 @@ job_list = []
 
 def consume(in_q, out_q):
     while True:
-        job = in_q.get()
-        if job is None:
-            break
-        print('process %s' % job[0])
-        y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
-        if len(y) is not 0:
-            mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
-            mfcc = mfcc.transpose()
-            # For some samples the length is insufficient, just ignore them
-            if len(mfcc) >= random_sample_size:
-                os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
-                out_q.put([mfcc, job[3]])
-                in_q.task_done()
-                print('%s has been processed' % job[0])
-
-"""
-class Job(object):
-    def __init__(self, filename, file_path, processed_files_path, is_music):
-        self.filename = filename
-        self.is_music = is_music
-        self.file_path = file_path
-        self.processed_files_path = processed_files_path
-"""
+        try:
+            job = in_q.get()
+            if job is None:
+                break
+            print('process %s' % job[0])
+            y, sr = librosa.load(job[1] + '/' + job[0], sr=44100)
+            if len(y) is not 0:
+                mfcc = librosa.feature.mfcc(y=y, sr=44100, n_mfcc=64, n_fft=1102, hop_length=441, power=2.0, n_mels=64)
+                mfcc = mfcc.transpose()
+                # For some samples the length is insufficient, just ignore them
+                if len(mfcc) >= random_sample_size:
+                    os.rename(job[1] + '/' + job[0], job[2] + '/' + job[0])
+                    out_q.put([mfcc, job[3]])
+                    in_q.task_done()
+                    print('%s has been processed' % job[0])
+        except NoBackEndError:
+            pass
+        except EOFError:
+            pass
 
 def produce(in_q):
     for filename in os.listdir(music_files_path):
@@ -100,6 +96,7 @@ def persistance(q):
                 feature = q.get()
                 print('get no.%g feature' % count)
                 if feature is None:
+                    print('get None feature, stop the process!')
                     stop = True
                     break
                 if len(feature[0]) >= 256:
