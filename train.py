@@ -10,7 +10,7 @@ import random
 
 n_input = 256 * 64
 n_classes = 2
-max_iter = 100000
+max_iter = 200000
 batch_size = 64
 random_sample_size = 256
 isLoad = False
