@@ -84,8 +84,8 @@ def main():
 
 def persistance(q):
     limit = 2000
-    dump_list = []
     stop = False
+    dump_list = []
     print('process queue!')
     while True:
         with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
@@ -104,10 +104,13 @@ def persistance(q):
                     dump_list.append(feature)
                     count += 1
             dill.dump(dump_list, fp)
+            print('%g files has been processed and dumped!' % count)
+            del dump_list[:]
 
     if len(dump_list) is not 0:
         with open(base_url + '/data.clip.' + datetime.now().strftime('%s'), 'wb') as fp:
             dill.dump(dump_list, fp)
+            print('the last %g files has been processed and dumped!' % len(dump_list))
 
 if __name__ == '__main__':
     main()
