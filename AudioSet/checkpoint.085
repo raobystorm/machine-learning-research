@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/rui.zhong/audio-recognition/AudioSet/model.ckpt.085"
+all_model_checkpoint_paths: "/Users/rui.zhong/audio-recognition/AudioSet/model.ckpt.085"

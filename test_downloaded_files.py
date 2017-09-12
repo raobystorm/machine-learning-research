@@ -1,34 +1,46 @@
 import csv
 import os
 
+music_set = set()
+nonmusic_set = set()
+
+music_path = '/home/centos/audio-recognition/AudioSet/music'
+nonmusic_path = '/home/centos/audio-recognition/AudioSet/nonmusic'
+
+def read_csv_file(fp):
+    reader = csv.reader(fp)
+    str_list = []
+    for row in reader:
+        filename = row[0]
+        string = ''.join(row)
+        if '/m/04rlf' in string:
+            music_set.add(filename + '.m4a')
+        else:
+            nonmusic_set.add(filename + '.m4a')
+
 with open('/home/centos/audio-recognition/AudioSet/balanced_train_segments.csv', mode='r') as fp:
-    with open('/home/centos/audio-recognition/AudioSet/eval_segments.csv', mode='r') as eval_fp:
-        reader = csv.reader(fp)
-        str_list = []
-        for row in reader:
-            str_list.append(row)
+    read_csv_file(fp)
 
-        reader = csv.reader(eval_fp)
-        eval_list = []
-        for row in reader:
-            eval_list.append(row)
+with open('/home/centos/audio-recognition/AudioSet/eval_segments.csv', mode='r') as fp:
+    read_csv_file(fp)
 
-        for filename in os.listdir('/home/centos/audio-recognition/AudioSet/music'):
-            filename = filename.rsplit('.', 1)[0]
-            assert '/m/04rlf' in str(list(filter(lambda x: filename in x, str_list))[0])
+with open('/home/centos/audio-recognition/AudioSet/unbalanced_train_segments.csv', mode='r') as fp:
+    read_csv_file(fp)
 
-        for filename in os.listdir('/home/centos/audio-recognition/AudioSet/nonmusic'):
-            filename = filename.rsplit('.', 1)[0]
-            assert '/m/04rlf' not in str(list(filter(lambda x: filename in x, str_list))[0])
+music_count = 0
+nonmusic_count = 0
+for f in os.listdir(music_path):
+    if f not in music_set and f in nonmusic_set:
+        print('Move nonmusic in music folder! %s' % f)
+        os.rename(music_path + '/' + f, nonmusic_path + '/' + f)
+    elif f in music_set:
+        music_count += 1
 
-        print('train data OK')
+for f in os.listdir(nonmusic_path):
+    if f not in nonmusic_set and f in music_set:
+        print('Move music in nonmusic folder! %s' % f)
+        os.rename(nonmusic_path + '/' + f, music_path + '/' + f)
+    elif f in nonmusic_set:
+        nonmusic_count += 1
 
-        for filename in os.listdir('/home/centos/audio-recognition/AudioSet/eval_music'):
-            filename = filename.rsplit('.', 1)[0]
-            assert '/m/04rlf' in str(list(filter(lambda x: filename in x, eval_list))[0])
-
-        for filename in os.listdir('/home/centos/audio-recognition/AudioSet/eval_nonmusic'):
-            filename = filename.rsplit('.', 1)[0]
-            assert '/m/04rlf' not in str(list(filter(lambda x: filename in x, eval_list))[0])
-
-        print('eval data OK')
+print('music count is %d, and nonmusic count is %d' % (music_count, nonmusic_count))

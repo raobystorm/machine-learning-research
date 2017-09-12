@@ -3,13 +3,15 @@ import numpy as np
 import os
 import time
 import librosa
+import dill
 import pickle
+import glob
 import random
 
 n_input = 256 * 64
 n_classes = 2
-max_iter = 150000
-batch_size = 128
+max_iter = 200000
+batch_size = 64
 random_sample_size = 256
 isLoad = False
 
@@ -19,10 +21,10 @@ print('max_iter: %d' % max_iter)
 print('batch_size: %d' % batch_size)
 print('random_sample_size: %d' % random_sample_size)
 
-model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt'
+model_save_path = 'AudioSet/model.ckpt'
 
-data_file = '/home/centos/audio-recognition/AudioSet/data.1503388707'
-eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
+data_files_path = 'AudioSet/'
+eval_data_file = 'test/test_medium/eval.prod.dat'
 
 def random_sample(data_batch):
     data_list = []
@@ -57,18 +59,29 @@ def load_data(file):
             data[1] = data[1].astype(np.float32)
         return data_block
 
+def load_data_files_from_path(path):
+    files = glob.glob(data_files_path + '/data.clip*')
+    data_block = []
+    for f in files:
+        with open(f, 'rb') as fp:
+            data = dill.load(fp)
+            data_block.extend(data)
+    for data in data_block:
+        data[0] = data[0].astype(np.float32)
+        data[1] = np.asarray(data[1])
+        data[1] = data[1].astype(np.float32)
+    return data_block
+
 sess = tf.InteractiveSession()
 
 x = tf.placeholder(tf.float32, shape=[None, n_input])
 y_ = tf.placeholder(tf.float32, shape=[None, n_classes])
 
-def weight_varible(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
+def weight_varible(name, shape):
+    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.xavier_initializer(uniform=True, dtype=tf.float32))
 
-def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial)
+def bias_variable(name, shape):
+    return tf.get_variable(name, initializer=tf.constant(0.1, shape=shape, dtype=tf.float32))
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
@@ -83,57 +96,68 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible([10, 5, 1, 48])
-b_conv1 = bias_variable([48])
+W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
+b_conv1 = bias_variable('b_conv1', [48])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = max_pool_wh(h_conv1, 4, 2)
 
 # conv layer-2
-W_conv2 = weight_varible([4, 4, 48, 96])
-b_conv2 = bias_variable([96])
+W_conv2 = weight_varible('W_conv2', [5, 5, 48, 96])
+b_conv2 = bias_variable('b_conv2', [96])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool_wh(h_conv2, 4, 2)
 
 # conv layer-3
-W_conv3 = weight_varible([3, 3, 96, 128])
-b_conv3 = bias_variable([128])
+W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
+b_conv3 = bias_variable('b_conv3', [96])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
-h_pool3 = max_pool(h_conv3, 3)
+
+# conv layer-4
+W_conv4 = weight_varible('W_conv4', [3, 3, 96, 96])
+b_conv4 = bias_variable('b_conv4', [96])
+
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+
+# conv layer-5
+W_conv5 = weight_varible('W_conv5', [3, 3, 96, 128])
+b_conv5 = bias_variable('b_conv5', [128])
+
+h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
+h_pool5 = max_pool(h_conv5, 2)
 
 # fully-connect-1
-W_fc1 = weight_varible([6 * 6 * 128, 1024])
-b_fc1 = bias_variable([1024])
+W_fc1 = weight_varible('W_fc1', [8 * 8 * 128, 1024])
+b_fc1 = bias_variable('b_fc1', [1024])
 
-h_pool3_flat = tf.reshape(h_pool3, [-1, 6 * 6 * 128])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool3_flat, W_fc1) + b_fc1)
+h_pool5_flat = tf.reshape(h_pool5, [-1, 8 * 8 * 128])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
+
+#dropout-1
+keep_prob_1 = tf.placeholder(tf.float32)
+h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
 # fully-connect-2
-W_fc2 = weight_varible([1024, 128])
-b_fc2 = bias_variable([128])
+W_fc2 = weight_varible('W_fc2', [1024, 128])
+b_fc2 = bias_variable('b_fc2', [128])
 
-h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
+h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-# dropout-1
-keep_prob_1 = tf.placeholder(tf.float32)
+# dropout-2
 h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # output layer: softmax
-W_fc3 = weight_varible([128, n_classes])
-b_fc3 = bias_variable([n_classes])
+W_fc3 = weight_varible('W_fc3', [128, n_classes])
+b_fc3 = bias_variable('b_fc3', [n_classes])
 
 y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
 saver = tf.train.Saver()
 
 #learning_rate
-#global_step = tf.Variable(0, trainable=False)
-#boundaries = [30000, 80000, 150000]
-#values = [1e-4, 5e-5, 1e-5, 3e-5]
-#learning_rate = tf.train.piecewise_constant(global_step, boundaries, values)
-learning_rate = 1e-4
+learning_rate = 1e-3
 
 # model training
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -143,9 +167,10 @@ correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 with tf.Session() as sess:
-    data_ = load_data(data_file)
+    data_ = load_data_files_from_path(data_files_path)
     random.shuffle(data_)
     test_data = load_data(eval_data_file)
+    max_accuracy = 0.0
 
     if isLoad:
         saver.restore(sess, model_save_path)
@@ -157,12 +182,17 @@ with tf.Session() as sess:
         if i % 800 == 0:
             train_accuacy = accuracy.eval(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuacy))
-        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.3})
+        train_step.run(feed_dict={x: train_batch[0], y_: train_batch[1], keep_prob_1: 0.5})
         if i % 5000 == 0:
             test_batch = random_sample(test_data)
-            print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
-            print('Model saved in %s' % saver.save(sess, model_save_path))
+            test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
+            print('test accuracy %g' % test_accuracy)
+            if test_accuracy > max_accuracy:
+                max_accuracy = test_accuracy
+                print('Model saved in %s' % saver.save(sess, model_save_path))
 
     test_batch = random_sample(test_data)
-    print('test accuracy %g' % accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0}))
-    print('Model saved in %s' % saver.save(sess, model_save_path))
+    test_accuracy = accuracy.eval(feed_dict={x: test_batch[0], y_: test_batch[1], keep_prob_1: 1.0})
+    print('test accuracy %g' % test_accuracy)
+    if test_accuracy > max_accuracy:
+        print('Model saved in %s' % saver.save(sess, model_save_path))
