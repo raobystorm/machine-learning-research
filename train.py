@@ -24,7 +24,8 @@ print('random_sample_size: %d' % random_sample_size)
 model_save_path = 'AudioSet/model.ckpt'
 
 data_files_path = 'AudioSet/'
-eval_data_file = 'test/test_medium/eval.prod.dat'
+eval_data_file = 'AudioSet/eval_data.dat'
+#eval_data_file = 'test/test_medium/eval.prod.dat'
 
 def random_sample(data_batch):
     data_list = []
@@ -96,21 +97,21 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [10, 5, 1, 48])
-b_conv1 = bias_variable('b_conv1', [48])
+W_conv1 = weight_varible('W_conv1', [11, 11, 1, 32])
+b_conv1 = bias_variable('b_conv1', [32])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
 h_pool1 = max_pool_wh(h_conv1, 4, 2)
 
 # conv layer-2
-W_conv2 = weight_varible('W_conv2', [5, 5, 48, 96])
-b_conv2 = bias_variable('b_conv2', [96])
+W_conv2 = weight_varible('W_conv2', [5, 5, 32, 64])
+b_conv2 = bias_variable('b_conv2', [64])
 
 h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
 h_pool2 = max_pool_wh(h_conv2, 4, 2)
 
 # conv layer-3
-W_conv3 = weight_varible('W_conv3', [3, 3, 96, 96])
+W_conv3 = weight_varible('W_conv3', [3, 3, 64, 96])
 b_conv3 = bias_variable('b_conv3', [96])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
@@ -122,18 +123,30 @@ b_conv4 = bias_variable('b_conv4', [96])
 h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
 
 # conv layer-5
-W_conv5 = weight_varible('W_conv5', [3, 3, 96, 128])
-b_conv5 = bias_variable('b_conv5', [128])
+W_conv5 = weight_varible('W_conv5', [3, 3, 96, 96])
+b_conv5 = bias_variable('b_conv5', [96])
 
 h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
-h_pool5 = max_pool(h_conv5, 2)
+
+# conv layer-6
+W_conv6 = weight_varible('W_conv6', [3, 3, 96, 96])
+b_conv6 = bias_variable('b_conv6', [96])
+
+h_conv6 = tf.nn.relu(conv2d(h_conv5, W_conv6) + b_conv6)
+
+# conv layer-7
+W_conv7 = weight_varible('W_conv7', [3, 3, 96, 96])
+b_conv7 = bias_variable('b_conv7', [96])
+
+h_conv7 = tf.nn.relu(conv2d(h_conv6, W_conv7) + b_conv7)
+h_pool7 = max_pool(h_conv7, 2)
 
 # fully-connect-1
-W_fc1 = weight_varible('W_fc1', [8 * 8 * 128, 1024])
+W_fc1 = weight_varible('W_fc1', [8 * 8 * 96, 1024])
 b_fc1 = bias_variable('b_fc1', [1024])
 
-h_pool5_flat = tf.reshape(h_pool5, [-1, 8 * 8 * 128])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool5_flat, W_fc1) + b_fc1)
+h_pool7_flat = tf.reshape(h_pool7, [-1, 8 * 8 * 96])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool7_flat, W_fc1) + b_fc1)
 
 #dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)

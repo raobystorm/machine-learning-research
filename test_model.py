@@ -17,7 +17,7 @@ print('n_classes: %d' % n_classes)
 print('batch_size: %d' % batch_size)
 print('random_sample_size: %d' % random_sample_size)
 
-model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt.085'
+model_save_path = '/home/centos/audio-recognition/AudioSet/model.ckpt.093'
 
 #eval_data_file = '/home/centos/audio-recognition/AudioSet/eval_data.dat'
 eval_data_file = '/home/centos/audio-recognition/test/test_medium/eval.prod.dat'
