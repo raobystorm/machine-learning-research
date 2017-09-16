@@ -97,64 +97,102 @@ def max_pool_wh(x, w, h):
 x_image = tf.reshape(x, [-1, 256, 64, 1])
 
 # conv layer-1
-W_conv1 = weight_varible('W_conv1', [11, 11, 1, 32])
-b_conv1 = bias_variable('b_conv1', [32])
+W_conv1 = weight_varible('W_conv1', [3, 3, 1, 64])
+b_conv1 = bias_variable('b_conv1', [64])
 
 h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-h_pool1 = max_pool_wh(h_conv1, 4, 2)
 
 # conv layer-2
-W_conv2 = weight_varible('W_conv2', [5, 5, 32, 64])
+W_conv2 = weight_varible('W_conv2', [3, 3, 64, 64])
 b_conv2 = bias_variable('b_conv2', [64])
 
-h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-h_pool2 = max_pool_wh(h_conv2, 4, 2)
+h_conv2 = tf.nn.relu(conv2d(h_conv1, W_conv2) + b_conv2)
+h_pool2 = max_pool_wh(h_conv2, 2, 1)
 
 # conv layer-3
-W_conv3 = weight_varible('W_conv3', [3, 3, 64, 96])
-b_conv3 = bias_variable('b_conv3', [96])
+W_conv3 = weight_varible('W_conv3', [3, 3, 64, 128])
+b_conv3 = bias_variable('b_conv3', [128])
 
 h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 
 # conv layer-4
-W_conv4 = weight_varible('W_conv4', [3, 3, 96, 96])
-b_conv4 = bias_variable('b_conv4', [96])
+W_conv4 = weight_varible('W_conv4', [3, 3, 128, 128])
+b_conv4 = bias_variable('b_conv4', [128])
 
-h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)]
+h_pool4 = max_pool_wh(h_conv4, 2, 1)
 
 # conv layer-5
-W_conv5 = weight_varible('W_conv5', [3, 3, 96, 96])
-b_conv5 = bias_variable('b_conv5', [96])
+W_conv5 = weight_varible('W_conv5', [3, 3, 256, 256])
+b_conv5 = bias_variable('b_conv5', [256])
 
-h_conv5 = tf.nn.relu(conv2d(h_conv4, W_conv5) + b_conv5)
+h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
 
 # conv layer-6
-W_conv6 = weight_varible('W_conv6', [3, 3, 96, 96])
-b_conv6 = bias_variable('b_conv6', [96])
+W_conv6 = weight_varible('W_conv6', [3, 3, 256, 256])
+b_conv6 = bias_variable('b_conv6', [256])
 
 h_conv6 = tf.nn.relu(conv2d(h_conv5, W_conv6) + b_conv6)
 
 # conv layer-7
-W_conv7 = weight_varible('W_conv7', [3, 3, 96, 96])
-b_conv7 = bias_variable('b_conv7', [96])
+W_conv7 = weight_varible('W_conv7', [3, 3, 256, 256])
+b_conv7 = bias_variable('b_conv7', [256])
 
 h_conv7 = tf.nn.relu(conv2d(h_conv6, W_conv7) + b_conv7)
 h_pool7 = max_pool(h_conv7, 2)
 
-# fully-connect-1
-W_fc1 = weight_varible('W_fc1', [8 * 8 * 96, 1024])
-b_fc1 = bias_variable('b_fc1', [1024])
+# conv layer-8
+W_conv8 = weight_varible('W_conv8', [3, 3, 512, 512])
+b_conv8 = bias_variable('b_conv8', [512])
 
-h_pool7_flat = tf.reshape(h_pool7, [-1, 8 * 8 * 96])
-h_fc1 = tf.nn.relu(tf.matmul(h_pool7_flat, W_fc1) + b_fc1)
+h_conv8 = tf.nn.relu(conv2d(h_pool7, W_conv8) + b_conv8)
+
+# conv layer-9
+W_conv9 = weight_varible('W_conv9', [3, 3, 512, 512])
+b_conv9 = bias_variable('b_conv9', [512])
+
+h_conv9 = tf.nn.relu(conv2d(h_conv8, W_conv9) + b_conv9)
+
+# conv layer-10
+W_conv10 = weight_varible('W_conv10', [3, 3, 512, 512])
+b_conv10 = bias_variable('b_conv10', [512])
+
+h_conv10 = tf.nn.relu(conv2d(h_conv9, W_conv10) + b_conv10)
+h_pool10 = max_pool(h_conv10, 2)
+
+# conv layer-11
+W_conv11 = weight_varible('W_conv11', [3, 3, 512, 512])
+b_conv11 = bias_variable('b_conv11', [512])
+
+h_conv11 = tf.nn.relu(conv2d(h_pool10, W_conv11) + b_conv11)
+
+# conv layer-12
+W_conv12 = weight_varible('W_conv12', [3, 3, 512, 512])
+b_conv12 = bias_variable('b_conv12', [512])
+
+h_conv12 = tf.nn.relu(conv2d(h_conv11, W_conv12) + b_conv12)
+
+# conv layer-13
+W_conv13 = weight_varible('W_conv13', [3, 3, 512, 512])
+b_conv13 = bias_variable('b_conv13', [512])
+
+h_conv13 = tf.nn.relu(conv2d(h_conv12, W_conv13) + b_conv13)
+h_pool13 = max_pool(h_conv13, 2)
+
+# fully-connect-1
+W_fc1 = weight_varible('W_fc1', [8 * 8 * 512, 4096])
+b_fc1 = bias_variable('b_fc1', [4096])
+
+h_pool13_flat = tf.reshape(h_pool13, [-1, 8 * 8 * 512])
+h_fc1 = tf.nn.relu(tf.matmul(h_pool13_flat, W_fc1) + b_fc1)
 
 #dropout-1
 keep_prob_1 = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob_1)
 
 # fully-connect-2
-W_fc2 = weight_varible('W_fc2', [1024, 128])
-b_fc2 = bias_variable('b_fc2', [128])
+W_fc2 = weight_varible('W_fc2', [4096, 4096])
+b_fc2 = bias_variable('b_fc2', [4096])
 
 h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
@@ -162,7 +200,7 @@ h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob_1)
 
 # output layer: softmax
-W_fc3 = weight_varible('W_fc3', [128, n_classes])
+W_fc3 = weight_varible('W_fc3', [4096, n_classes])
 b_fc3 = bias_variable('b_fc3', [n_classes])
 
 y_conv = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
