@@ -119,11 +119,11 @@ h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
 W_conv4 = weight_varible('W_conv4', [3, 3, 128, 128])
 b_conv4 = bias_variable('b_conv4', [128])
 
-h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)]
+h_conv4 = tf.nn.relu(conv2d(h_conv3, W_conv4) + b_conv4)
 h_pool4 = max_pool_wh(h_conv4, 2, 1)
 
 # conv layer-5
-W_conv5 = weight_varible('W_conv5', [3, 3, 256, 256])
+W_conv5 = weight_varible('W_conv5', [3, 3, 128, 256])
 b_conv5 = bias_variable('b_conv5', [256])
 
 h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
@@ -142,7 +142,7 @@ h_conv7 = tf.nn.relu(conv2d(h_conv6, W_conv7) + b_conv7)
 h_pool7 = max_pool(h_conv7, 2)
 
 # conv layer-8
-W_conv8 = weight_varible('W_conv8', [3, 3, 512, 512])
+W_conv8 = weight_varible('W_conv8', [3, 3, 256, 512])
 b_conv8 = bias_variable('b_conv8', [512])
 
 h_conv8 = tf.nn.relu(conv2d(h_pool7, W_conv8) + b_conv8)
