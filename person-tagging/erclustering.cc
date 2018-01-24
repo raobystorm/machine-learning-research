@@ -7,12 +7,12 @@
 
 using namespace std;
 
-extern double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int gallerySize);
+extern float **Rank1Count(float **vecs,float **gallery,int G,int N,int F,int K,int gallerySize);
 
 extern int compare_IndexedFloats (const void *a, const void *b);
 
 struct IndexedFloat {
-  double val;
+  float val;
   int index;
   int source;
 };
@@ -33,7 +33,7 @@ BOOST_PYTHON_MODULE(erclustering)
 // This function takes as input an FxN (F is usually 4096) matrix corresponding 
 // to N CNN feature vectors to be clustered.
 //
-// It returns an (double **) pointing to an NxN array of "rank-1 counts" for each pair 
+// It returns an (float **) pointing to an NxN array of "rank-1 counts" for each pair 
 // of images (A,B). The higher the rank-1 counts, the more likely a pair (A,B) is
 // to be "joined". Using a threshold, one can convert this matrix to a binary matrix
 // by setting entry i,j to "1" if the rank-1 count is above the threshold and 0 
@@ -50,9 +50,9 @@ BOOST_PYTHON_MODULE(erclustering)
 // gallerySize - How large of a gallery to simulate? (50)
 
 // Output
-// bitMat -      (double **) that is NxN with counts.
+// bitMat -      (float **) that is NxN with counts.
 
-double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int gallerySize) {
+float **Rank1Count(float **vecs,float **gallery,int G,int N,int F,int K,int gallerySize) {
 
     // Do some argument checking.
     if (gallerySize>G) {
@@ -101,9 +101,9 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
     }
 
     // Allocate the output matrix.
-    double **bitMat=new double*[N];
+    float **bitMat=new float*[N];
     for (int i=0; i<N; i++) 
-        bitMat[i]=new double[N];
+        bitMat[i]=new float[N];
 
     // Produce table of expected probabilities of rank-1, given kth nearest
     // neighbor index and gallery size.
@@ -111,7 +111,7 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
     // bigger than all G of the gallery images. Thus, ranks can go from 1 to
     // G+1. We fill in "rank 0", which can never be used, so that we can index
     // the array using rank instead of (rank-1).
-    double *expProb=new double[G+2];                     // Need values 0-(G+1).
+    float *expProb=new float[G+2];                     // Need values 0-(G+1).
     double galSize=(double) gallerySize;
     expProb[0]=1.0;    // This is a dummy value and should never be used.
     for (int i=1; i<=G+1; i++) {
@@ -150,11 +150,11 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
             destind[f][sortvecs[f][j].index]=j;
     }
 
-    double MAX_FLOAT=std::numeric_limits<double>::max();
+    float MAX_FLOAT=std::numeric_limits<float>::max();
     
     int leftInd,rightInd,origIndex;
-    double leftDif,rightDif;
-    double *accumRanks=new double[N];
+    float leftDif,rightDif;
+    float *accumRanks=new float[N];
     for (int i=0; i<N; i++) {              // For each clustering image...
     // To select the "A"'s, in the pairs (A,B), work with the UNSORTED ROWS (urow).
     // That way, the entire column of features comes from the same vector.
@@ -163,11 +163,11 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
         for (int j=0; j<N; j++)              //   Initialize accumRanks vector.
             accumRanks[j]=0.0;
         for (int f=0; f<F; f++) {            //   for each feature...
-            double *uRow=vecs[f];                   // unsorted row.
+            float *uRow=vecs[f];                   // unsorted row.
             IndexedFloat *sRow=sortvecs[f];        // sorted row.
             leftInd=destind[f][i]-1;   
             rightInd=destind[f][i]+1;  
-            double pivotVal=uRow[i];                // value we're comparing distance to. 
+            float pivotVal=uRow[i];                // value we're comparing distance to. 
       
             leftDif=(leftInd==-1)?MAX_FLOAT:pivotVal-sRow[leftInd].val;
             rightDif=(rightInd==N+G)?MAX_FLOAT:sRow[rightInd].val-pivotVal; //rightDif=(rightInd==N)?MAX_FLOAT:sRow[rightInd].val-pivotVal;
@@ -206,7 +206,7 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
             }
         }
         // We just finished processing all of the features for a given pivot.
-        // Now, we want to take the accumRanks vector, which is a doubleing point
+        // Now, we want to take the accumRanks vector, which is a floating point
         // array of size N, and store it as one of the rows in a more compact
         // final matrix.
         for (int j=0; j<N; j++) {
@@ -230,12 +230,12 @@ double **Rank1Count(double **vecs,double **gallery,int G,int N,int F,int K,int g
 
 int compare_IndexedFloats (const void *a, const void *b) {
     // We cheat a bit here to make things faster. 
-    // We pretend we are dereferencing a double ptr even
+    // We pretend we are dereferencing a float ptr even
     // though we are really dereferencing a ptr to an IndexedFloat.
     // We can get away with this since the first element of an IndexedFloat
     // is the value we are looking for.
     // This saves us an extra dereference.
-    double dif=(*(double*)a - *(double*)b);
+    float dif=(*(float*)a - *(float*)b);
     if (dif>0)
         return 1;
     else if (dif<0)
