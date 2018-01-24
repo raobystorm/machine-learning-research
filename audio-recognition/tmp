@@ -1,0 +1,20 @@
+import librosa
+y, sr = librosa.load(filename, sr=44100)
+mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10, 4))
+from librosa import display
+librosa.display.specshow(y, x_axis='time')
+plt.colorbar()
+plt.title('MFCC')
+plt.tight_layout()
+plt.show()
+
+bazel build --config=opt --verbose_failures --config=cuda //tensorflow/tools/pip_package:build_pip_package
+/usr/lib/x86_64-linux-gnu
+data_batch = tf.train.shuffle_batch([data_tensors , label_tensors], batch_size=batch_size, capacity=capacity, min_after_dequeue=min_after_dequeue)
+
+def weight_varible(name, shape):
+    return tf.get_variable(name, dtype=tf.float32, initializer=tf.truncated_normal(shape, stddev=0.1))
+
+model_save_path = '/home/raoby/audio-recognition/AudioSet/model.ckpt'
