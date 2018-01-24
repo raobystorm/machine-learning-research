@@ -7,6 +7,10 @@
 
 using namespace std;
 
+extern float **Rank1Count(float **vecs,float **gallery,int G,int N,int F,int K,int gallerySize);
+
+extern int compare_IndexedFloats (const void *a, const void *b);
+
 struct IndexedFloat {
   float val;
   int index;
