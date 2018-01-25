@@ -155,7 +155,7 @@ vector<vector<float> > Rank1Count(vector<vector<float> > vecs,vector<vector<floa
     }
 
     // Allocate the output matrix.
-    vector<vector<float> > bitMat(N, vector<float>(N));
+    vector<vector<float> > bitMat(N, vector<float>(N, 0.0));
 
     // Produce table of expected probabilities of rank-1, given kth nearest
     // neighbor index and gallery size.
@@ -267,8 +267,8 @@ vector<vector<float> > Rank1Count(vector<vector<float> > vecs,vector<vector<floa
             bitMat[i][j]=accumRanks[j];
         }
     }
-  
-    
+
+
     // Deallocate where necessary.
     printf("starting deleteions\n");
     delete expProb;

@@ -23,13 +23,13 @@ for sub_folder in os.listdir(base_folder):
 
     print 'Reference set and test set loaded! Start clustering for ' + sub_folder + ' data set.'
 
-    N = len(ref_raw)
+    G = len(ref_raw)
     for array, img_name in ref_raw:
         ref_set.append(array)
         ref_filename_list.append(img_name)
     ref_set = map(list, zip(*ref_set))
-
-    G = len(test_raw)
+    
+    N = len(test_raw)
     for array, img_name in test_raw:
         test_set.append(array)
         test_filename_list.append(img_name)
