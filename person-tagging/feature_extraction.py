@@ -6,7 +6,7 @@ import cPickle
 
 caffe_root = './'
 sys.path.insert(0, caffe_root + 'python')
-gallery_ratio = 0.7
+gallery_ratio = 0.95
 
 import caffe
 
@@ -24,7 +24,7 @@ test_set = []
 reference_set = []
 
 for sub_folder in os.listdir(base_folder):
-    img_count = 0
+    img_count = 1
     img_folder = base_folder + '/' + sub_folder + '/images'
     total_count = len(os.listdir(img_folder))
     reference_count = int(total_count * gallery_ratio)
@@ -37,7 +37,7 @@ for sub_folder in os.listdir(base_folder):
         output = net.forward()
         output = output['fc7'].tolist()
         output.append(img)
-        if img_count < reference_count:
+        if img_count <= reference_count:
             reference_set.append(output)
             print 'processed: reference image: ' + img + ', reference count: ' + str(img_count) + '/' + str(reference_count)
         else:
