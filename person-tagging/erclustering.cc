@@ -56,8 +56,6 @@ extern vector<vector<float> > Rank1Count(vector<vector<float> > vecs,vector<vect
 
 extern int compare_IndexedFloats (const void *a, const void *b);
 
-extern vector<vector<float> > sub_mean(vector<vector<float> > vecs);
-
 struct IndexedFloat {
   float val;
   int index;
@@ -81,14 +79,6 @@ BOOST_PYTHON_MODULE(erclustering)
         &pylist_to_vector_converter<vector<vector<float> > >::convertible,
         &pylist_to_vector_converter<vector<vector<float> > >::construct,
         boost::python::type_id<vector<vector<float> > >());
-}
-
-vector<vector<float> > sub_mean(vector<vector<float> > vecs) {
-    for(int i = 0; i < vecs.size(); i++) {
-        double avg = accumulate(vecs.begin(), vecs.end(), 0.0) / vecs.size();
-        transform(vecs.begin(), vecs.end(), vecs.begin(), [avg](float x) { return (float)(x - avg); })
-    }
-    return vecs;
 }
 
 // This version of Rank1 Count uses an "external" gallery.

@@ -12,8 +12,8 @@ image_size = (227, 227)
 
 import caffe
 
-class Image(Object):
-    def __init__(self, image=image, name=name):
+class Image(object):
+    def __init__(self, image, name):
         self.image = image
         self.name = name
 
@@ -67,24 +67,24 @@ for sub_folder in os.listdir(base_folder):
 
 # Preprocess for image, calc mean and deviation
 print 'Start calc image mean and deviation for reference images.'
-ref_image = [ data.image for data in ref_image ]
-ref_mean = np.mean(ref_images, axis=0)
+ref_image = [ data.image for data in ref_images_name ]
+ref_mean = np.mean(ref_image, axis=0)
 ref_std = np.std(ref_image, axis=0)
 
 ref_images_name = [ preprocess_image(image, ref_mean, ref_std) for image in ref_images_name ]
 
 print 'Start calc image mean and deviation for test images.'
-test_image = [ data.image for data in test_image ]
-test_mean = np.mean(test_images, axis=0)
+test_image = [ data.image for data in test_images_name ]
+test_mean = np.mean(test_image, axis=0)
 test_std = np.std(test_image, axis=0)
 
 test_images_name = [ preprocess_image(image, test_mean, test_std) for image in test_images_name ]
 
 print 'Start feature extraction for reference images.'
-ref_images_name = [ feature_extract(images_name, net) for image_name in ref_images_name ]
+ref_images_name = [ feature_extract(image_name, net) for image_name in ref_images_name ]
 
 print 'Start feature extraction for test images.'
-test_images_name = [ feature_extract(images_name, net) for image_name in test_images_name ]
+test_images_name = [ feature_extract(image_name, net) for image_name in test_images_name ]
 
 with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_reference.dat', 'wb') as f:
     cPickle.dump(ref_images_name, f)
