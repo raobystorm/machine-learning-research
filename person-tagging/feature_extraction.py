@@ -24,7 +24,6 @@ def preprocess_image(image, mean, std):
     return image
 
 def feature_extract(image_name, net):
-    print 'Feature extract for image:' + image_name.name
     transformed_image = transformer.preprocess('data', image_name.image)
     net.blobs['data'].data[...] = transformed_image
     output = net.forward()
@@ -64,30 +63,29 @@ for sub_folder in os.listdir(base_folder):
             test_images_name.append(Image(image=image, name=img))
         img_count += 1
 
+    # Preprocess for image, calc mean and deviation
+    print 'Start calc image mean and deviation for reference images.' + sub_folder
+    ref_image = [ data.image for data in ref_images_name ]
+    ref_mean = np.mean(ref_image, axis=0)
+    ref_std = np.std(ref_image, axis=0)
 
-# Preprocess for image, calc mean and deviation
-print 'Start calc image mean and deviation for reference images.'
-ref_image = [ data.image for data in ref_images_name ]
-ref_mean = np.mean(ref_image, axis=0)
-ref_std = np.std(ref_image, axis=0)
+    ref_images_name = [ preprocess_image(image, ref_mean, ref_std) for image in ref_images_name ]
 
-ref_images_name = [ preprocess_image(image, ref_mean, ref_std) for image in ref_images_name ]
+    print 'Start calc image mean and deviation for test images.' + sub_folder
+    test_image = [ data.image for data in test_images_name ]
+    test_mean = np.mean(test_image, axis=0)
+    test_std = np.std(test_image, axis=0)
 
-print 'Start calc image mean and deviation for test images.'
-test_image = [ data.image for data in test_images_name ]
-test_mean = np.mean(test_image, axis=0)
-test_std = np.std(test_image, axis=0)
+    test_images_name = [ preprocess_image(image, test_mean, test_std) for image in test_images_name ]
 
-test_images_name = [ preprocess_image(image, test_mean, test_std) for image in test_images_name ]
+    print 'Start feature extraction for reference images.' + sub_folder
+    ref_images_name = [ feature_extract(image_name, net) for image_name in ref_images_name ]
 
-print 'Start feature extraction for reference images.'
-ref_images_name = [ feature_extract(image_name, net) for image_name in ref_images_name ]
+    print 'Start feature extraction for test images.' + sub_folder
+    test_images_name = [ feature_extract(image_name, net) for image_name in test_images_name ]
 
-print 'Start feature extraction for test images.'
-test_images_name = [ feature_extract(image_name, net) for image_name in test_images_name ]
+    with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_reference.dat', 'wb') as f:
+        cPickle.dump(ref_images_name, f)
 
-with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_reference.dat', 'wb') as f:
-    cPickle.dump(ref_images_name, f)
-
-with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_test.dat', 'wb') as f:
-    cPickle.dump(test_images_name, f)
+    with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_test.dat', 'wb') as f:
+        cPickle.dump(test_images_name, f)
