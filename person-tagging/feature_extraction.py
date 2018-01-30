@@ -6,7 +6,7 @@ import cPickle
 
 caffe_root = './'
 sys.path.insert(0, caffe_root + 'python')
-gallery_ratio = 0.95
+gallery_ratio = 0.90
 
 import caffe
 
@@ -20,10 +20,10 @@ transformer.set_transpose('data', (2, 0, 1))
 net.blobs['data'].reshape(1, 3, 227, 227)
 
 base_folder = '/home/centos/mitene-pre_experiment/results'
-test_set = []
-reference_set = []
 
 for sub_folder in os.listdir(base_folder):
+    test_set = []
+    reference_set = []
     img_count = 1
     img_folder = base_folder + '/' + sub_folder + '/images'
     total_count = len(os.listdir(img_folder))
