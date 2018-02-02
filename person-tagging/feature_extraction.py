@@ -3,10 +3,12 @@
 import os
 import sys
 import cPickle
+import numpy as np
 
 caffe_root = './'
 sys.path.insert(0, caffe_root + 'python')
-gallery_ratio = 0.90
+ref_count = 1000
+test_count = 200
 
 import caffe
 
@@ -21,31 +23,46 @@ net.blobs['data'].reshape(1, 3, 227, 227)
 
 base_folder = '/home/centos/mitene-pre_experiment/results'
 
+
 for sub_folder in os.listdir(base_folder):
-    test_set = []
-    reference_set = []
+    ref_set = []
     img_count = 1
     img_folder = base_folder + '/' + sub_folder + '/images'
-    total_count = len(os.listdir(img_folder))
-    reference_count = int(total_count * gallery_ratio)
-    for img in os.listdir(img_folder):
+    test_set = [ img_folder + '/' + img for img in os.listdir(img_folder) ]
+    for other_folder in os.listdir(base_folder):
+        if other_folder == sub_folder:
+            continue
+        img_folder = base_folder + '/' + other_folder + '/images'
+        ref_set +=  [ img_folder + '/' + img for img in os.listdir(img_folder) ]
+
+    test_idx = np.random.choice(len(test_set), test_count)
+    ref_idx = np.random.choice(len(ref_set), ref_count)
+
+    test_set = [ test_set[i] for i in test_idx ]
+    ref_set = [ ref_set[i] for i in ref_idx ]
+
+
+def extract_result(data_set, count):
+    data_set = []
+    for img in data_set:
         if os.path.splitext(img)[1] != '.jpg':
             continue
-        image = caffe.io.load_image(img_folder + '/' + img)
+        if i >= count:
+            return data_set
+        image = caffe.io.load_image(img)
         transformed_image = transformer.preprocess('data', image)
         net.blobs['data'].data[...] = transformed_image
         output = net.forward()
         output = output['fc7'].tolist()
         output.append(img)
-        if img_count <= reference_count:
-            reference_set.append(output)
-            print 'processed: reference image: ' + img + ', reference count: ' + str(img_count) + '/' + str(reference_count)
-        else:
-            test_set.append(output)
-            print 'processed: test image: ' + img + ', test count: ' + str(img_count - reference_count) + '/' + str(total_count - reference_count)
-        img_count += 1
+        data_set.append(output)
 
-    with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_reference.dat', 'wb') as f:
-        cPickle.dump(reference_set, f)
-    with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_test.dat', 'wb') as f:
-        cPickle.dump(test_set, f)
+
+test_set = extract_result(test_set, test_count)
+ref_set = extract_result(ref_set, ref_count)
+
+with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_reference.dat', 'wb') as f:
+    cPickle.dump(ref_set, f)
+
+with open(base_folder + '/' + sub_folder + '/data_' + sub_folder + '_test.dat', 'wb') as f:
+    cPickle.dump(test_set, f)
