@@ -8,7 +8,7 @@ import random
 labled_folder = '/Users/rui.zhong/nao_images'
 res_file = labled_folder + '/result_nao.dat'
 strs = []
-threathhold = 108.0
+threathhold = 110.0
 
 # Convert Rank1Count matrix into adjacency matrix 'matrix'
 
@@ -118,9 +118,11 @@ for i in filename_list:
 
 P = tp / (tp + fp)
 R = tp / (tp + fn)
-b = 2.5
+b = 2
 F = (b**2 + 1) * P * R / (b**2 * P + R)
+RI = (tp + tn) / (tp + fp + fn + tn)
 
 print(P)
 print(R)
 print(F)
+print(RI)
