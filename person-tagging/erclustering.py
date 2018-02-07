@@ -12,7 +12,7 @@ test_set = []
 test_filename_list = []
 
 F = 4096
-gallery_size = 50
+gallery_size = 100
 K = 200
 
 def nonzerorization(mat):

@@ -2,7 +2,7 @@ detector = Mitene::Media::DlibFaceDetector.new(prefer_dnn: true)
 results = {}
 dir_path = '/home/ruizhong/mitene-pre_experiment/'
 Dir.foreach(dir_path) do |img|
-  next if img == '.' || img == '..'
+  next if img == '.' || img == '..' || img == '.DS_Store'
   pp img
   results[dir_path + img] = detector.detect_one(dir_path + img)
 end

@@ -36,7 +36,7 @@ def extract_result(data_set, count):
         net.blobs['data'].data[...] = transformed_image
         output = net.forward()
         output = output['fc7'].tolist()
-        output.append(img)
+        output.append(img.split('/')[-1])
         res_set.append(output)
     return res_set
 
@@ -52,11 +52,11 @@ for sub_folder in os.listdir(base_folder):
         img_folder = base_folder + '/' + other_folder + '/images'
         ref_set +=  [ img_folder + '/' + img for img in os.listdir(img_folder) ]
 
-    test_idx = np.random.choice(len(test_set), test_count)
-    ref_idx = np.random.choice(len(ref_set), ref_count)
+    np.random.shuffle(test_set)
+    np.random.shuffle(ref_set)
+    test_set = test_set[:test_count]
+    ref_set = ref_set[:ref_count]
 
-    test_set = [ test_set[i] for i in test_idx ]
-    ref_set = [ ref_set[i] for i in ref_idx ]
     test_res = extract_result(test_set, test_count)
     ref_res = extract_result(ref_set, ref_count)
 

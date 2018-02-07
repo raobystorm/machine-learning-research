@@ -5,8 +5,9 @@ import os
 import numpy
 import random
 
-labled_folder = '/Users/rui.zhong/kasahara_images'
-res_file = labled_folder + '/result_kasahara.dat'
+labled_folder = '/Users/rui.zhong/nao_images_face'
+res_file = labled_folder + '/result_nao.dat'
+result_folder = '/Users/rui.zhong/nao_images_face/results'
 strs = []
 start_threas = 25.0
 end_threas = 45.0
@@ -14,9 +15,11 @@ delta = 0.1
 threashold = start_threas
 res = str('\n')
 
+
 def check_connectivity(str, threashold):
     f = float(str)
     return f >= threashold
+
 
 def no_do_not_link_constraint(set_i, set_j):
     for i in set_i:
@@ -25,10 +28,12 @@ def no_do_not_link_constraint(set_i, set_j):
                 return False
     return True
 
+
 def find(filename, groups):
     for group in groups:
         if filename in group:
             return group
+
 
 def in_the_same_set(i, j, sets):
     for any_set in sets:
@@ -37,15 +42,13 @@ def in_the_same_set(i, j, sets):
     return False
 
 
-def run_with_threas(threashold, res):
+def run_with_threas(threashold, res, res_file, result_folder):
     # Convert Rank1Count matrix into adjacency matrix 'matrix'
 
     with open(res_file, 'r') as f:
         strs = f.readlines()
         filename_list = strs[0].replace(' ', '').replace('\n', '').split(',')[:-1]
         strs = strs[1:]
-
-    print(len(filename_list))
 
     matrix = {}
     for i in range(len(strs)):
@@ -92,22 +95,19 @@ def run_with_threas(threashold, res):
     fp = 0
     tn = 0
 
-    result_folder = '/Users/rui.zhong/kasahara_images/results'
     for folder in os.listdir(result_folder):
         if folder == 'others':
             others_set = set(os.listdir(result_folder + '/' + folder))
-        elif folder == 'child1':
+        elif folder == 'child':
             child_set = set(os.listdir(result_folder + '/' + folder))
-        elif folder == 'child2':
-            child_set_2 = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'father':
             father_set = set(os.listdir(result_folder + '/' + folder))
-        else:
+        elif folder == 'mother':
             mother_set = set(os.listdir(result_folder + '/' + folder))
+        else:
+            continue
 
-    sets = [child_set, child_set_2, father_set, mother_set, others_set]
-    print(len(child_set))
-    print(len(child_set_2))
+    sets = [child_set, father_set, mother_set, others_set]
 
     for i in filename_list:
         for j in filename_list:
@@ -155,7 +155,7 @@ def run_with_threas(threashold, res):
     largest = max(groups, key=len)
     correct = 0
     for i in largest:
-        if i in child_set or i in child_set_2:
+        if i in child_set:
             correct += 1
 
     print('correct: ' + str(correct))
@@ -168,7 +168,7 @@ def run_with_threas(threashold, res):
 #     res = run_with_threas(threashold, res)
 #     threashold += delta
 
-run_with_threas(float(sys.argv[1]), res)
+run_with_threas(float(sys.argv[1]), res, res_file, result_folder)
 
 with open(labled_folder + '/analysis_output.txt', 'w') as f:
     f.write(res)
