@@ -5,13 +5,13 @@ import cPickle
 import random
 import erclustering
 
-base_folder = '/home/centos/mitene-pre_experiment/results'
+base_folder = '/Users/rui.zhong/mitene-pre_experiment_with_face'
 ref_set = []
 ref_filename_list = []
 test_set = []
 test_filename_list = []
 
-F = 4096
+F = 8192
 gallery_size = 100
 K = 200
 

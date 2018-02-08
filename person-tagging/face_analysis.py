@@ -9,12 +9,11 @@ labled_folder = '/Users/rui.zhong/nao_images_face'
 res_file = labled_folder + '/result_nao.dat'
 result_folder = '/Users/rui.zhong/nao_images_face/results'
 strs = []
-start_threas = 25.0
-end_threas = 45.0
-delta = 0.1
+start_threas = 95.0
+end_threas = 125.0
+delta = 0.05
 threashold = start_threas
 res = str('\n')
-
 
 def check_connectivity(str, threashold):
     f = float(str)
@@ -164,11 +163,9 @@ def run_with_threas(threashold, res, res_file, result_folder):
     res += ('accuracy: ' + str(correct / len(largest)) + '\n\n')
     return res
 
-# while threashold <= end_threas:
-#     res = run_with_threas(threashold, res)
-#     threashold += delta
-
-run_with_threas(float(sys.argv[1]), res, res_file, result_folder)
+while threashold <= end_threas:
+    res = run_with_threas(threashold, res, res_file, result_folder)
+    threashold += delta
 
 with open(labled_folder + '/analysis_output.txt', 'w') as f:
     f.write(res)
