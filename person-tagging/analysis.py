@@ -5,13 +5,12 @@ import os
 import numpy
 import random
 
-labled_folder = '/Users/rui.zhong/kasahara_images'
+labled_folder = '/Users/rui.zhong/results/kasahara_images'
 res_file = labled_folder + '/result_kasahara.dat'
 strs = []
-start_threas = 25.0
-end_threas = 45.0
+start_threas = 208.0
+end_threas = 230.0
 delta = 0.1
-threashold = start_threas
 res = str('\n')
 
 def check_connectivity(str, threashold):
@@ -44,8 +43,6 @@ def run_with_threas(threashold, res):
         strs = f.readlines()
         filename_list = strs[0].replace(' ', '').replace('\n', '').split(',')[:-1]
         strs = strs[1:]
-
-    print(len(filename_list))
 
     matrix = {}
     for i in range(len(strs)):
@@ -92,7 +89,7 @@ def run_with_threas(threashold, res):
     fp = 0
     tn = 0
 
-    result_folder = '/Users/rui.zhong/kasahara_images/results'
+    result_folder = '/Users/rui.zhong/results/kasahara_images/results'
     for folder in os.listdir(result_folder):
         if folder == 'others':
             others_set = set(os.listdir(result_folder + '/' + folder))
@@ -106,8 +103,6 @@ def run_with_threas(threashold, res):
             mother_set = set(os.listdir(result_folder + '/' + folder))
 
     sets = [child_set, child_set_2, father_set, mother_set, others_set]
-    print(len(child_set))
-    print(len(child_set_2))
 
     for i in filename_list:
         for j in filename_list:
@@ -164,6 +159,7 @@ def run_with_threas(threashold, res):
     res += ('accuracy: ' + str(correct / len(largest)) + '\n\n')
     return res
 
+# threashold = start_threas
 # while threashold <= end_threas:
 #     res = run_with_threas(threashold, res)
 #     threashold += delta
