@@ -14,7 +14,7 @@ import caffe
 
 caffe.set_mode_gpu()
 model_def = caffe_root + 'models/mitene_test/alexnet_extraction.prototxt'
-model_weights = caffe_root + 'models/mitene_test/upper_body.caffemodel'
+model_weights = caffe_root + 'models/mitene_test/face.caffemodel'
 net = caffe.Net(model_def, model_weights, caffe.TEST)
 
 transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
@@ -46,9 +46,9 @@ def extract_body_results(face_data_set):
     for face_data in face_data_set:
         data = face_data[0]
         filename = face_data[1].split('/')[-1]
-        filename = filename.split('_')[0] + '_' + filename.split('_')[1] + '.jpg'
         if os.path.splitext(filename)[1] != '.jpg':
             continue
+        filename = filename.split('_')[0] + '_' + filename.split('_')[1] + '.jpg'
         img_path = face_data[1].split('/face_images')[0] + '/body_images/' + filename
         image = caffe.io.load_image(img_path)
         transformed_image = transformer.preprocess('data', image)
@@ -56,12 +56,12 @@ def extract_body_results(face_data_set):
         output = net.forward()
         output = output['fc7'].tolist()[0]
         data += output
-        res_set.append([ data, filename ])
+        res_set.append([ data, face_data[1].split('/')[-1] ])
     return res_set
 
 
 face_ref_set = []
-sub_folder = os.listdir(base_folder)[2]
+sub_folder = os.listdir(base_folder)[0]
 img_folder = base_folder + '/' + sub_folder
 face_test_set = [ img_folder + '/face_images/' + img for img in os.listdir(img_folder + '/face_images') ]
 for other_folder in os.listdir(base_folder):
@@ -76,7 +76,7 @@ face_test_set = extract_face_result(face_test_set, len(face_test_set))
 face_ref_set = extract_face_result(face_ref_set, len(face_ref_set))
 
 model_def = caffe_root + 'models/mitene_test/alexnet_extraction.prototxt'
-model_weights = caffe_root + 'models/mitene_test/face.caffemodel'
+model_weights = caffe_root + 'models/mitene_test/upper_body.caffemodel'
 net = caffe.Net(model_def, model_weights, caffe.TEST)
 
 transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
