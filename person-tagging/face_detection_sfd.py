@@ -5,6 +5,8 @@ import os
 import sys
 import cPickle
 import numpy as np
+import cv2
+import pdb
 
 
 caffe_root = './'
@@ -130,13 +132,14 @@ def bbox_vote(det):
     return dets
 
 output_file = '/home/centos/results.txt'
+detect_threshold = 0.3
 
 with open(output_file, 'w') as f:
     for sub_folder in os.listdir(base_folder):
         for img in os.listdir(base_folder + '/' + sub_folder + '/images'):
-            if os.splitext(img)[1] != '.jpg':
+            if os.path.splitext(img)[1] != '.jpg':
                 continue
-            image = caffe.io.load_image(img)
+            image = caffe.io.load_image(base_folder + '/' + sub_folder + '/images/' + img)
             max_im_shrink = (0x7fffffff / 577.0 / (image.shape[0] * image.shape[1])) ** 0.5 # the max size of input image for caffe
             shrink = max_im_shrink if max_im_shrink < 1 else 1
             det0 = detect_face(net, image, shrink)
@@ -144,11 +147,11 @@ with open(output_file, 'w') as f:
             [det2, det3] = multi_scale_test(net, image, max_im_shrink)
             det = np.row_stack((det0, det1, det2, det3))
             dets = bbox_vote(det)
-            f.write(img)
+            dets = dets[np.where(dets[:, 4] >= detect_threshold)]
             for i in xrange(dets.shape[0]):
-                xmin = det[i][0]
-                ymin = det[i][1]
-                xmax = det[i][2]
-                ymax = det[i][3]
-                score = det[i][4]
-                f.write('x:{:.1f}, y:{:.1f}, width:{:.1f}, height:{:.1f}\n'.format(xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1))
+                xmin = dets[i][0]
+                ymin = dets[i][1]
+                xmax = dets[i][2]
+                ymax = dets[i][3]
+                score = dets[i][4]
+                f.write('{:s}, x:{:.1f}, y:{:.1f}, width:{:.1f}, height:{:.1f}, score:{:.3f}\n'.format(img, xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1), score))
