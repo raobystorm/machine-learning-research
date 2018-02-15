@@ -8,20 +8,20 @@ import numpy as np
 caffe_root = './'
 sys.path.insert(0, caffe_root + 'python')
 ref_count = 1000
-test_count = 200
+test_count = 100
 
 import caffe
 
 caffe.set_mode_gpu()
 model_def = caffe_root + 'models/mitene_test/alexnet_extraction.prototxt'
-model_weights = caffe_root + 'models/mitene_test/full_body.caffemodel'
+model_weights = caffe_root + 'models/mitene_test/face.caffemodel'
 net = caffe.Net(model_def, model_weights, caffe.TEST)
 
 transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
 transformer.set_transpose('data', (2, 0, 1))
 net.blobs['data'].reshape(1, 3, 227, 227)
 
-base_folder = '/home/centos/mitene-pre_experiment/results'
+base_folder = '/home/centos/mitene-pre_experiment_face'
 
 
 def extract_result(data_set, count):
@@ -42,14 +42,16 @@ def extract_result(data_set, count):
 
 
 for sub_folder in os.listdir(base_folder):
+    if sub_folder == '.DS_Store':
+        continue
     ref_set = []
     img_count = 1
-    img_folder = base_folder + '/' + sub_folder + '/images'
+    img_folder = base_folder + '/' + sub_folder + '/face_images'
     test_set = [ img_folder + '/' + img for img in os.listdir(img_folder) ]
     for other_folder in os.listdir(base_folder):
         if other_folder == sub_folder:
             continue
-        img_folder = base_folder + '/' + other_folder + '/images'
+        img_folder = base_folder + '/' + other_folder + '/face_images'
         ref_set +=  [ img_folder + '/' + img for img in os.listdir(img_folder) ]
 
     np.random.shuffle(test_set)

@@ -6,14 +6,15 @@ import os
 base_folder = '/Users/rui.zhong/mitene-pre_experiment'
 input_file = '/Users/rui.zhong/results.txt'
 
+size_threshold = 50
 
 img_sets = {}
 for sub_folder in os.listdir(base_folder):
     sub_set = set()
-    if sub_folder == '.DS_Store':
+    if sub_folder == '.DS_Store' or sub_folder == 'face_images':
         continue
-    for img in os.listdir(base_folder + '/' + sub_folder):
-        if os.path.splitext(base_folder + '/' + sub_folder + '/' + img)[1] != '.jpg':
+    for img in os.listdir(base_folder + '/' + sub_folder + '/images'):
+        if os.path.splitext(base_folder + '/' + sub_folder + '/images/' + img)[1] != '.jpg':
             continue
         sub_set.add(img)
     img_sets[str(sub_folder)] = sub_set
@@ -28,16 +29,22 @@ with open(input_file, 'r') as f:
         items = line.replace(' ', '').split(',')
         filename = items[0]
         print('start processing: ' + filename)
-        x = int(items[1].split(':')[1])
-        y = int(items[2].split(':')[1])
-        width = int(items[3].split(':')[1])
-        height = int(items[4].split(':')[1])
+        x = int(round(float(items[1].split(':')[1])))
+        y = int(round(float(items[2].split(':')[1])))
+        width = int(round(float(items[3].split(':')[1])))
+        height = int(round(float(items[4].split(':')[1])))
+        score = float(items[5].split(':')[1])
+        print
+        if score < 0.9:
+            continue
+        if width <= size_threshold or height <= size_threshold:
+            continue 
         sub_folder = find_set(img_sets, filename)
         if sub_folder == None:
             continue
-        print('processing: ' + base_folder + '/' + sub_folder + '/' + filename)
-        img = Image.open(base_folder + '/' + sub_folder + '/' + filename)
+        print('processing: ' + base_folder + '/' + sub_folder + '/images/' + filename)
+        img = Image.open(base_folder + '/' + sub_folder + '/images/' + filename)
         img_crop = img.crop((x, y, x + width, y + height))
-        save_path = base_folder + '/' + sub_folder + '/results/' + os.path.splitext(filename)[0] + '_' + str(x) + '.jpg'
+        save_path = base_folder + '/' + sub_folder + '/face_images/' + os.path.splitext(filename)[0] + '_' + str(x) + '.jpg'
         img_crop.save(save_path)
         print('saved: ' + save_path)
