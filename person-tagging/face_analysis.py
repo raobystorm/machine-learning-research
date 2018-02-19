@@ -4,15 +4,17 @@ import sys
 import os
 import numpy
 import random
+import shutil
 
-labled_folder = '/Users/rui.zhong/nao_images_face'
-res_file = labled_folder + '/result_nao.dat'
-result_folder = '/Users/rui.zhong/nao_images_face/results'
+sub_folder = 'kasahara'
+labled_folder = '/Users/rui.zhong/' + sub_folder + '_images_face'
+source_img_folder = '/Users/rui.zhong/mitene-pre_experiment_face/' + sub_folder + '/face_images'
+res_file = labled_folder + '/result_' + sub_folder + '.dat'
+result_folder = labled_folder + '/results'
 strs = []
-start_threas = 95.0
-end_threas = 125.0
-delta = 0.05
-threashold = start_threas
+start_threas = 98.0
+end_threas = 110.0
+delta = 0.1
 res = str('\n')
 
 def check_connectivity(str, threashold):
@@ -41,7 +43,7 @@ def in_the_same_set(i, j, sets):
     return False
 
 
-def run_with_threas(threashold, res, res_file, result_folder):
+def run_with_threas(threashold, res):
     # Convert Rank1Count matrix into adjacency matrix 'matrix'
 
     with open(res_file, 'r') as f:
@@ -99,6 +101,8 @@ def run_with_threas(threashold, res, res_file, result_folder):
             others_set = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'child':
             child_set = set(os.listdir(result_folder + '/' + folder))
+        elif folder == 'child2':
+            child2_set = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'father':
             father_set = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'mother':
@@ -106,7 +110,7 @@ def run_with_threas(threashold, res, res_file, result_folder):
         else:
             continue
 
-    sets = [child_set, father_set, mother_set, others_set]
+    sets = [child_set, child2_set, father_set, mother_set, others_set]
 
     for i in filename_list:
         for j in filename_list:
@@ -134,11 +138,11 @@ def run_with_threas(threashold, res, res_file, result_folder):
             else:
                 print('SHOULD NOT BE HERE!!!!!')
 
-    P = tp / (tp + fp)
-    R = tp / (tp + fn)
+    P = tp * 1.0 / (tp + fp)
+    R = tp * 1.0 / (tp + fn)
     b = 2
     F = (b**2 + 1) * P * R / (b**2 * P + R)
-    RI = (tp + tn) / (tp + fp + fn + tn)
+    RI = (tp + tn) * 1.0 / (tp + fp + fn + tn)
 
     print('threathhold: ' + str(threashold))
     res += ('threathhold: ' + str(threashold) + '\n')
@@ -154,18 +158,38 @@ def run_with_threas(threashold, res, res_file, result_folder):
     largest = max(groups, key=len)
     correct = 0
     for i in largest:
-        if i in child_set:
+        if i in child_set or i in child2_set:
             correct += 1
 
     print('correct: ' + str(correct))
     res += ('correct: ' + str(correct) + '\n')
-    print('accuracy: ' + str(correct / len(largest)) + '\n')
-    res += ('accuracy: ' + str(correct / len(largest)) + '\n\n')
-    return res
+    print('accuracy: ' + str(correct * 1.0 / len(largest)) + '\n')
+    res += ('accuracy: ' + str(correct * 1.0 / len(largest)) + '\n\n')
+    return res, groups
 
-while threashold <= end_threas:
-    res = run_with_threas(threashold, res, res_file, result_folder)
-    threashold += delta
+# threashold = start_threas
+# while threashold <= end_threas:
+#     res, groups = run_with_threas(threashold, res)
+#     threashold += delta
+
+_, groups = run_with_threas(float(sys.argv[1]), res)
+
+groups = sorted(groups, key=len)
 
 with open(labled_folder + '/analysis_output.txt', 'w') as f:
     f.write(res)
+
+grouped_fodler = labled_folder + '/grouped'
+
+if os.path.exists(grouped_fodler):
+    shutil.rmtree(grouped_fodler)
+
+os.mkdir(grouped_fodler)
+
+g_count = 0
+for group in groups:
+    group_path = grouped_fodler + '/group_' + str(g_count)
+    os.mkdir(grouped_fodler + '/group_' + str(g_count))
+    for img in group:
+        shutil.copyfile(source_img_folder + '/' + img, group_path + '/' + img)
+    g_count += 1
