@@ -6,7 +6,7 @@ import numpy
 import random
 import shutil
 
-sub_folder = 'kasahara'
+sub_folder = 'nao'
 labled_folder = '/Users/rui.zhong/results/' + sub_folder + '_images/'
 source_img_folder = '/Users/rui.zhong/mitene-pre_experiment_with_face/' + sub_folder + '/body_images'
 res_file = labled_folder + '/result_' + sub_folder + '.dat'
@@ -99,10 +99,8 @@ def run_with_threas(threashold, res):
     for folder in os.listdir(result_folder):
         if folder == 'others':
             others_set = set(os.listdir(result_folder + '/' + folder))
-        elif folder == 'child1':
+        elif folder == 'child':
             child_set = set(os.listdir(result_folder + '/' + folder))
-        elif folder == 'child2':
-            child2_set = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'father':
             father_set = set(os.listdir(result_folder + '/' + folder))
         elif folder == 'mother':
@@ -110,7 +108,7 @@ def run_with_threas(threashold, res):
         else:
             continue
 
-    sets = [child_set, child2_set, father_set, mother_set, others_set]
+    sets = [child_set, father_set, mother_set, others_set]
 
     for i in filename_list:
         for j in filename_list:
@@ -163,7 +161,7 @@ def run_with_threas(threashold, res):
     correct = 0
     for i in largest:
         ii = i.split('_')[0] + '_' + i.split('_')[1] + '.jpg'
-        if ii in child_set or ii in child2_set:
+        if ii in child_set:
             correct += 1
 
     print('correct: ' + str(correct))

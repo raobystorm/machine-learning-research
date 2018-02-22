@@ -45,6 +45,7 @@ with open(input_file, 'r') as f:
         print('processing: ' + base_folder + '/' + sub_folder + '/images/' + filename)
         img = Image.open(base_folder + '/' + sub_folder + '/images/' + filename)
         img_crop = img.crop((x, y, x + width, y + height))
+        img_crop = img_crop.resize((182, 182))
         save_path = base_folder + '/' + sub_folder + '/face_images/' + os.path.splitext(filename)[0] + '_' + str(x) + '.jpg'
         img_crop.save(save_path)
         print('saved: ' + save_path)
