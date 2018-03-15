@@ -6,6 +6,7 @@ import argparse
 import facenet
 import os
 import math
+
 def face_distance(face_encodings, face_to_compare):
     """
     Given a list of face encodings, compare them to a known face encoding and get a euclidean distance
@@ -26,7 +27,7 @@ def load_model(model_dir, meta_file, ckpt_file):
     saver = tf.train.import_meta_graph(os.path.join(model_dir_exp, meta_file))
     saver.restore(tf.get_default_session(), os.path.join(model_dir_exp, ckpt_file))
 
-def _chinese_whispers(encoding_list, threshold=0.55, iterations=20):
+def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
     """ Chinese Whispers Algorithm
 
     Modified from Alex Loveless' implementation,
@@ -121,6 +122,8 @@ def _chinese_whispers(encoding_list, threshold=0.55, iterations=20):
             if cluster not in clusters:
                 clusters[cluster] = []
             clusters[cluster].append(path)
+        else:
+            clusters[path] = [path]
 
     # Sort cluster output
     sorted_clusters = sorted(clusters.values(), key=len, reverse=True)
