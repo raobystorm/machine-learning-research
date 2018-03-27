@@ -132,7 +132,7 @@ def bbox_vote(det):
     return dets
 
 output_file = '/home/centos/results.txt'
-detect_threshold = 0.3
+detect_threshold = 0.9
 
 with open(output_file, 'w') as f:
     for sub_folder in os.listdir(base_folder):

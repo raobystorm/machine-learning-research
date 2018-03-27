@@ -8,6 +8,7 @@ import json
 from PIL import Image
 import math
 import pdb
+import numpy as np
 
 size_threshold = 50
 face_size = (160, 160)
@@ -20,7 +21,8 @@ arm_factor = 0.3
 original_base_folder = '/Users/rui.zhong/result_body/user1'
 original_img_folder = original_base_folder + '/images'
 pose_folder = original_base_folder + '/pose'
-result_folder = original_base_folder + '/results'
+result_face_folder = original_base_folder + '/results/face'
+result_body_folder = original_base_folder + '/results/body'
 face_bbox_file = '/Users/rui.zhong/result_body/results.txt'
 
 faces = {}
@@ -120,7 +122,8 @@ for filename in os.listdir(original_img_folder):
 
     count = 0
     for person in json_body["people"]:
-        result_img = Image.new('RGB', (387, 227), (127, 127, 127))
+        imarray = np.random.rand(body_size[0] + upper_arm_size[0] + lower_arm_size[0], body_size[1], 3) * 255
+        body_img = Image.fromarray(imarray.astype('uint8')).convert('RGB')
         body_points = person["pose_keypoints_2d"]
         face_points = find_face_crop(filename, (body_points[0], body_points[1]))
 
@@ -137,7 +140,7 @@ for filename in os.listdir(original_img_folder):
             y3 = min(img.size[0], y4 + abs(x4 - x1))
 
         trans_body = img.transform(body_size, Image.QUAD, (x1, y1, x2, y2, x3, y3, x4, y4))
-        result_img.paste(trans_body, (face_size[0] + upper_arm_size[0], 0))
+        body_img.paste(trans_body, (upper_arm_size[0], 0))
 
         if (x1 == y1 == 0) or (x4 == y4 == 0):
             continue
@@ -152,31 +155,31 @@ for filename in os.listdir(original_img_folder):
                 crop_face = img.crop(get_bbox_from_area(face_candidate))
 
         crop_face = crop_face.resize(face_size)
-        result_img.paste(crop_face, (0, 0))
+        crop_face.save(result_face_folder + '/' + filename + '_' + str(count) + '_face.jpg')
 
         l_x1, l_y1 = body_points[9], body_points[10]
         l_arm1_rect = calc_arm_rectangle(x1, y1, l_x1, l_y1)
         if l_arm1_rect:
             trans_upper_left_arm = img.transform(upper_arm_size, Image.QUAD, l_arm1_rect)
-            result_img.paste(trans_upper_left_arm, (face_size[0], 0))
+            body_img.paste(trans_upper_left_arm, (0, 0))
 
         l_x2, l_y2 = body_points[12], body_points[13]
         l_arm2_rect = calc_arm_rectangle(l_x1, l_y1, l_x2, l_y2)
         if l_arm2_rect:
             trans_lower_left_arm = img.transform(lower_arm_size, Image.QUAD, l_arm2_rect)
-            result_img.paste(trans_lower_left_arm, (face_size[0], upper_arm_size[1]))
+            body_img.paste(trans_lower_left_arm, (0, upper_arm_size[1]))
 
         r_x1, r_y1 = body_points[18], body_points[19]
         r_arm1_rect = calc_arm_rectangle(x4, y4, r_x1, r_y1)
         if r_arm1_rect:
             trans_upper_right_arm = img.transform(upper_arm_size, Image.QUAD, r_arm1_rect)
-            result_img.paste(trans_upper_right_arm, (face_size[0] + body_size[0] + upper_arm_size[0], 0))
+            body_img.paste(trans_upper_right_arm, (body_size[0] + upper_arm_size[0], 0))
 
         r_x2, r_y2 = body_points[21], body_points[22]
         r_arm2_rect = calc_arm_rectangle(r_x1, r_y1, r_x2, r_y2)
         if r_arm2_rect:
             trans_lower_right_arm = img.transform(upper_arm_size, Image.QUAD, r_arm2_rect)
-            result_img.paste(trans_lower_right_arm, (face_size[0] + body_size[0] + upper_arm_size[0], upper_arm_size[1]))
+            body_img.paste(trans_lower_right_arm, (body_size[0] + upper_arm_size[0], upper_arm_size[1]))
 
-        result_img.save(result_folder + '/' + filename + '_' + str(count) + '.jpg')
+        body_img.save(result_body_folder + '/' + filename + '_' + str(count) + '_body.jpg')
         count += 1

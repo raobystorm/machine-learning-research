@@ -32,7 +32,6 @@ def crop_person_clustering_dataset():
                     count += 1
 
 
-
 def detect_and_output():
     result_file = base_folder + '/input_json.json'
     model_path = 'VOC2012model_v1.hdf5'
