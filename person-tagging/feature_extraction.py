@@ -47,12 +47,12 @@ for sub_folder in os.listdir(base_folder):
     ref_set = []
     img_count = 1
     img_folder = base_folder + '/' + sub_folder + '/face_images'
-    test_set = [ img_folder + '/' + img for img in os.listdir(img_folder) ]
+    test_set = [img_folder + '/' + img for img in os.listdir(img_folder)]
     for other_folder in os.listdir(base_folder):
         if other_folder == sub_folder or other_folder == '.DS_Store' or other_folder == 'input_images.txt':
             continue
         img_folder = base_folder + '/' + other_folder + '/face_images'
-        ref_set +=  [ img_folder + '/' + img for img in os.listdir(img_folder) ]
+        ref_set += [img_folder + '/' + img for img in os.listdir(img_folder)]
 
     np.random.shuffle(test_set)
     np.random.shuffle(ref_set)

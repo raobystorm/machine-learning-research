@@ -7,7 +7,6 @@ import os
 import json
 from PIL import Image
 import math
-import pdb
 import numpy as np
 
 size_threshold = 50
@@ -91,7 +90,6 @@ def calc_arm_rectangle(x1, y1, x2, y2):
     yy3 = k * xx3 + b2
     yy4 = k * xx4 + b2
     return (xx1, yy1, xx3, yy3, xx4, yy4, xx2, yy2)
-
 
 with open(face_bbox_file, 'r') as f:
     for line in f.readlines():
