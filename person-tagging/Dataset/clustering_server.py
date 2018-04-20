@@ -7,6 +7,9 @@ import tensorflow as tf
 import facenet
 import os
 import math
+import zipfile
+import boto3
+import concurrent.futures
 
 
 def face_distance(face_encodings, face_to_compare):
@@ -203,6 +206,19 @@ def get_onedir(paths):
     return dataset
 
 
+def zip_and_upload(sorted_clusters, fam_id):
+    filename = os.path.join('/tmp/', fam_id + '.zip')
+    with zipfile.ZipFile(filename, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        for idx, cluster in sorted_clusters:
+            for path in cluster:
+                write_path = os.path.join(fam_id, idx, os.path.basename(path))
+                zf.write(filename=path, arcname=write_path)
+
+    s3 = boto3.session.Session().resource('s3')
+    s3.Bucket('mitene-deeplearning-dataset').upload_file(filename, 'faces/' + os.path.basename(filename))
+    print('Finished upload for family:' + fam_id)
+
+
 def run():
     """ Main
 
@@ -216,12 +232,8 @@ def run():
     import shutil
 
     batch_size = 20
-    input_base = '/home/ubuntu/faces'
-    output_dir = '/home/ubuntu/clustered'
+    input_base = '/home/ubuntu/faces_test'
     model_dir = '/home/ubuntu/FaceNet/'
-
-    if not exists(output_dir):
-        makedirs(output_dir)
 
     with tf.Graph().as_default():
         with tf.Session() as sess:
@@ -232,41 +244,30 @@ def run():
             print('Checkpoint file: %s' % ckpt_file)
             load_model(model_dir, meta_file, ckpt_file)
 
-            for fam_id in os.listdir(input_base):
-                input_dir = os.path.join(input_base, fam_id)
+            with concurrent.futures.ThreadPoolExecutor(max_worker=10) as executor:
+                for fam_id in os.listdir(input_base):
+                    input_dir = os.path.join(input_base, fam_id)
+                    image_paths = get_onedir(input_dir)
+                    # image_list, label_list = facenet.get_image_paths_and_labels(train_set)
 
-                image_paths = get_onedir(input_dir)
-                # image_list, label_list = facenet.get_image_paths_and_labels(train_set)
+                    # Get input and output tensors
+                    images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
+                    embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
+                    phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
 
-                # Get input and output tensors
-                images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-                embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-                phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+                    image_size = images_placeholder.get_shape()[1]
+                    embedding_size = embeddings.get_shape()[1]
 
-                image_size = images_placeholder.get_shape()[1]
-                print("image_size:", image_size)
-                embedding_size = embeddings.get_shape()[1]
+                    nrof_images = len(image_paths)
+                    nrof_batches = int(math.ceil(1.0 * nrof_images / batch_size))
+                    emb_array = np.zeros((nrof_images, embedding_size))
+                    facial_encodings = compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_placeholder,
+                                                                image_size,
+                                                                embedding_size, nrof_images, nrof_batches, emb_array,
+                                                                batch_size, image_paths)
+                    sorted_clusters = cluster_facial_encodings(facial_encodings)
 
-                # Run forward pass to calculate embeddings
-                print('Runnning forward pass on images')
-
-                nrof_images = len(image_paths)
-                nrof_batches = int(math.ceil(1.0 * nrof_images / batch_size))
-                emb_array = np.zeros((nrof_images, embedding_size))
-                facial_encodings = compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_placeholder,
-                                                            image_size,
-                                                            embedding_size, nrof_images, nrof_batches, emb_array,
-                                                            batch_size, image_paths)
-                sorted_clusters = cluster_facial_encodings(facial_encodings)
-
-                # Copy image files to cluster folders
-                for idx, cluster in enumerate(sorted_clusters):
-                    # save all the cluster
-                    cluster_dir = join(output_dir, str(idx))
-                    if not exists(cluster_dir):
-                        makedirs(cluster_dir)
-                    for path in cluster:
-                        shutil.copy(path, join(cluster_dir, basename(path)))
+                    executor.submit(zip_and_upload, sorted_clusters, fam_id)
 
 
 run()

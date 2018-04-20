@@ -10,13 +10,15 @@ import sys
 import skimage
 import skimage.io
 from shutil import rmtree, copytree
+import concurrent.futures
+import time
 
 # Module constant definition
 ImageTypes = ('.jpg', '.jpeg', '.JPG', '.JPEG', '.PNG', '.png')
 crop_size = (160, 160)
 
 # Import caffe and initialization
-caffe_root = '/home/ubuntu/caffe-sfd/'
+caffe_root = '/home/ubuntu/caffe-sfd-p35/'
 sys.path.insert(0, caffe_root + 'python')
 import caffe
 
@@ -153,9 +155,10 @@ def _bbox_vote(det):
         except:
             dets = det_accu_sum
 
-    dets = dets[0:750, :]
-    return dets
-
+    if 'dets' in locals():
+        dets = dets[0:750, :]
+        return dets
+    return None
 
 def _process(net, job, det_threshold=0.9, size_threshold=50):
     img_folder = '/home/ubuntu/images/' + job
@@ -165,39 +168,49 @@ def _process(net, job, det_threshold=0.9, size_threshold=50):
     if not os.path.exists(output):
         os.makedirs(output)
 
-    for img_name in os.listdir(img_folder):
-        if os.path.splitext(img_name)[1] not in ImageTypes:
-            continue
-        # Use caffe-sfd to detect faces in images
-        caffe_image, original_img = _load_image(img_folder + '/' + img_name)
-        max_im_shrink = (0x7fffffff / 577.0 / (caffe_image.shape[0] * caffe_image.shape[1])) ** 0.5  # the max size of input image for caffe
-        shrink = max_im_shrink if max_im_shrink < 1 else 1
-        det0 = _detect_face(net, caffe_image, shrink)
-        det1 = _flip_test(net, caffe_image, shrink)
-        [det2, det3] = _multi_scale_test(net, caffe_image, max_im_shrink)
-        det = np.row_stack((det0, det1, det2, det3))
-        dets = _bbox_vote(det)
-        dets = dets[np.where(dets[:, 4] >= det_threshold)]
-        for i in range(dets.shape[0]):
-            xmin = max(int(dets[i][0]), 0)
-            ymin = max(int(dets[i][1]), 0)
-            xmax = int(dets[i][2])
-            ymax = int(dets[i][3])
-            # score = dets[i][4]
-            # Ignore those does not have enough size
-            if xmax - xmin < size_threshold or ymax - ymin < size_threshold:
-                continue
-            img = original_img[ymin:ymax, xmin: xmax]
-            img = skimage.transform.resize(img, crop_size)
-            name, ext = os.path.splitext(img_name)
-            skimage.io.imsave(output + '/' + name + '_' + str(i) + ext, img)
+    print('Start loading imgs for family: ' + job)
+    start_time = time.time()
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+        img_files = [os.path.join(img_folder, img_name) for img_name in os.listdir(img_folder)]
+        img_files = filter(lambda x: os.path.splitext(x)[1] in ImageTypes, img_files)
+        future_to_filename = {executor.submit(_load_image, filename) : filename for filename in img_files}
+        for future in concurrent.futures.as_completed(future_to_filename):
+            filename = future_to_filename[future]
+            try:
+                caffe_image, original_img = future.result()
+            except Exception as e:
+                print('%s generated an exception %s' % (filename, e))
+            else:
+                max_im_shrink = (0x7fffffff / 577.0 / (caffe_image.shape[0] * caffe_image.shape[1])) ** 0.5  # the max size of input image for caffe
+                shrink = max_im_shrink if max_im_shrink < 1 else 1
+                det0 = _detect_face(net, caffe_image, shrink)
+                det1 = _flip_test(net, caffe_image, shrink)
+                [det2, det3] = _multi_scale_test(net, caffe_image, max_im_shrink)
+                det = np.row_stack((det0, det1, det2, det3))
+                dets = _bbox_vote(det)
+                if dets is None:
+                    continue
+                dets = dets[np.where(dets[:, 4] >= det_threshold)]
+                for i in range(dets.shape[0]):
+                    xmin = max(int(dets[i][0]), 0)
+                    ymin = max(int(dets[i][1]), 0)
+                    xmax = int(dets[i][2])
+                    ymax = int(dets[i][3])
+                    # score = dets[i][4]
+                    # Ignore those does not have enough size
+                    if xmax - xmin < size_threshold or ymax - ymin < size_threshold:
+                        continue
+                    img = original_img[ymin:ymax, xmin: xmax]
+                    img = skimage.transform.resize(img, crop_size)
+                    name, ext = os.path.splitext(os.path.basename(filename))
+                    executor.submit(skimage.io.imsave, output + '/' + name + '_' + str(i) + ext, img)
 
-        print('Detected {0} faces in :{1}'.format(dets.shape[0], img_name))
+        print('Finished detection faces in family {0} with {1} seconds!'.format(job, time.time() - start_time))
 
-    print('Finished detection faces in family {0}!'.format(job))
+    print('Finished detection faces in family {0} with {1} seconds!'.format(job, time.time() - start_time))
 
-    copytree(img_folder, mvdir_des)
-    rmtree(img_folder, ignore_errors=True)
+    # copytree(img_folder, mvdir_des)
+    # rmtree(img_folder, ignore_errors=True)
 
 
 def run():
