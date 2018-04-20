@@ -2,16 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-""" Face Cluster """
 import tensorflow as tf
+import numpy as np
 import facenet
 import os
 import math
-import zipfile
-import boto3
 import concurrent.futures
-
-
 def face_distance(face_encodings, face_to_compare):
     """
     Given a list of face encodings, compare them to a known face encoding and get a euclidean distance
@@ -20,19 +16,16 @@ def face_distance(face_encodings, face_to_compare):
     :param face_to_compare: A face encoding to compare against
     :return: A numpy ndarray with the distance for each face in the same order as the 'faces' array
     """
-    import numpy as np
     if len(face_encodings) == 0:
         return np.empty((0))
 
-    # return 1/np.linalg.norm(face_encodings - face_to_compare, axis=1)
-    return np.sum(face_encodings * face_to_compare, axis=1)
-
+    #return 1/np.linalg.norm(face_encodings - face_to_compare, axis=1)
+    return np.sum(face_encodings*face_to_compare,axis=1)
 
 def load_model(model_dir, meta_file, ckpt_file):
     model_dir_exp = os.path.expanduser(model_dir)
     saver = tf.train.import_meta_graph(os.path.join(model_dir_exp, meta_file))
     saver.restore(tf.get_default_session(), os.path.join(model_dir_exp, ckpt_file))
-
 
 def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
     """ Chinese Whispers Algorithm
@@ -50,7 +43,7 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
             sorted by largest cluster to smallest
     """
 
-    # from face_recognition.api import _face_distance
+    #from face_recognition.api import _face_distance
     from random import shuffle
     import networkx as nx
     # Create graph
@@ -60,29 +53,29 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
     image_paths, encodings = zip(*encoding_list)
 
     if len(encodings) <= 1:
-        print("No enough encodings to cluster!")
+        print ("No enough encodings to cluster!")
         return []
 
     for idx, face_encoding_to_check in enumerate(encodings):
         # Adding node of facial encoding
-        node_id = idx + 1
+        node_id = idx+1
 
         # Initialize 'cluster' to unique value (cluster of itself)
         node = (node_id, {'cluster': image_paths[idx], 'path': image_paths[idx]})
         nodes.append(node)
 
         # Facial encodings to compare
-        if (idx + 1) >= len(encodings):
+        if (idx+1) >= len(encodings):
             # Node is last element, don't create edge
             break
 
-        compare_encodings = encodings[idx + 1:]
+        compare_encodings = encodings[idx+1:]
         distances = face_distance(compare_encodings, face_encoding_to_check)
         encoding_edges = []
         for i, distance in enumerate(distances):
             if distance > threshold:
                 # Add edge if facial match
-                edge_id = idx + i + 2
+                edge_id = idx+i+2
                 encoding_edges.append((node_id, edge_id, {'weight': distance}))
 
         edges = edges + encoding_edges
@@ -109,7 +102,7 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
             # find the class with the highest edge weight sum
             edge_weight_sum = 0
             max_cluster = 0
-            # use the max sum of neighbor weights class as current node's class
+            #use the max sum of neighbor weights class as current node's class
             for cluster in clusters:
                 if clusters[cluster] > edge_weight_sum:
                     edge_weight_sum = clusters[cluster]
@@ -129,14 +122,11 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
             if cluster not in clusters:
                 clusters[cluster] = []
             clusters[cluster].append(path)
-        else:
-            clusters[path] = [path]
 
     # Sort cluster output
     sorted_clusters = sorted(clusters.values(), key=len, reverse=True)
 
     return sorted_clusters
-
 
 def cluster_facial_encodings(facial_encodings):
     """ Cluster facial encodings
@@ -154,16 +144,15 @@ def cluster_facial_encodings(facial_encodings):
     """
 
     if len(facial_encodings) <= 1:
-        print("Number of facial encodings must be greater than one, can't cluster")
+        print ("Number of facial encodings must be greater than one, can't cluster")
         return []
 
     # Only use the chinese whispers algorithm for now
     sorted_clusters = _chinese_whispers(facial_encodings.items())
     return sorted_clusters
 
-
-def compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_placeholder, image_size,
-                             embedding_size, nrof_images, nrof_batches, emb_array, batch_size, paths):
+def compute_facial_encodings(sess,images_placeholder,embeddings,phase_train_placeholder,image_size,
+                    embedding_size,nrof_images,nrof_batches,emb_array,batch_size,paths):
     """ Compute Facial Encodings
 
         Given a set of images, compute the facial encodings of each face detected in the images and
@@ -178,29 +167,29 @@ def compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_p
     """
 
     for i in range(nrof_batches):
-        start_index = i * batch_size
-        end_index = min((i + 1) * batch_size, nrof_images)
+        start_index = i*batch_size
+        end_index = min((i+1)*batch_size, nrof_images)
         paths_batch = paths[start_index:end_index]
         images = facenet.load_data(paths_batch, False, False, image_size)
-        feed_dict = {images_placeholder: images, phase_train_placeholder: False}
-        emb_array[start_index:end_index, :] = sess.run(embeddings, feed_dict=feed_dict)
+        feed_dict = { images_placeholder:images, phase_train_placeholder:False }
+        emb_array[start_index:end_index,:] = sess.run(embeddings, feed_dict=feed_dict)
 
     facial_encodings = {}
     for x in range(nrof_images):
-        facial_encodings[paths[x]] = emb_array[x, :]
+        facial_encodings[paths[x]] = emb_array[x,:]
+
 
     return facial_encodings
-
 
 def get_onedir(paths):
     dataset = []
     path_exp = os.path.expanduser(paths)
     if os.path.isdir(path_exp):
         images = os.listdir(path_exp)
-        image_paths = [os.path.join(path_exp, img) for img in images]
+        image_paths = [os.path.join(path_exp,img) for img in images]
 
         for x in image_paths:
-            if os.path.getsize(x) > 0:
+            if os.path.getsize(x)>0:
                 dataset.append(x)
 
     return dataset
