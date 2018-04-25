@@ -9,6 +9,7 @@ import os
 import math
 import concurrent.futures
 import boto3
+import zipfile
 def face_distance(face_encodings, face_to_compare):
     """
     Given a list of face encodings, compare them to a known face encoding and get a euclidean distance
@@ -199,14 +200,38 @@ def get_onedir(paths):
 def zip_and_upload(sorted_clusters, fam_id):
     filename = os.path.join('/tmp/', fam_id + '.zip')
     with zipfile.ZipFile(filename, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-        for idx, cluster in sorted_clusters:
+        for idx, cluster in enumerate(sorted_clusters):
             for path in cluster:
-                write_path = os.path.join(fam_id, idx, os.path.basename(path))
+                write_path = os.path.join(fam_id, str(idx), os.path.basename(path))
                 zf.write(filename=path, arcname=write_path)
 
     s3 = boto3.session.Session().resource('s3')
     s3.Bucket('mitene-deeplearning-dataset').upload_file(filename, 'faces/' + os.path.basename(filename))
-    print('Finished upload for family:' + fam_id)
+    return fam_id
+
+
+def data_cleaning(sorted_clusters, path_encodings):
+    first_cluster = sorted_clusters[0]
+    first_cluster_paths = filter(lambda x: x in first_cluster, path_encodings.keys())
+    first_cluster_encodings = [path_encodings[x] for x in first_cluster_paths]
+    first_cluster_center = np.mean(first_cluster_encodings, axis=0)
+
+    for path in first_cluster:
+        uuid = os.path.basename(path).split('_')[0]
+        paths_with_uuid = list(filter(lambda x: uuid in x, first_cluster))
+        if len(paths_with_uuid) > 1:
+            max_dis = 0
+            for path in paths_with_uuid:
+                distance = np.sum(path_encodings[path]*first_cluster_center)
+                if distance > max_dis:
+                    max_dis = distance
+                    max_path = path
+
+            for path in paths_with_uuid:
+                if path != max_path:
+                    sorted_clusters[0].remove(path)
+
+    return sorted_clusters
 
 
 def run():
@@ -216,14 +241,12 @@ def run():
     images into folders of face clusters.
 
     """
-    from os.path import join, basename, exists
-    from os import makedirs
     import numpy as np
-    import shutil
 
     batch_size = 20
+    discard_threshold = 50
     input_base = '/home/ubuntu/faces_test'
-    model_dir = '/home/ubuntu/FaceNet/'
+    model_dir = '/home/ubuntu/FaceNet/20170512-110547'
 
     with tf.Graph().as_default():
         with tf.Session() as sess:
@@ -234,7 +257,8 @@ def run():
             print('Checkpoint file: %s' % ckpt_file)
             load_model(model_dir, meta_file, ckpt_file)
 
-            with concurrent.futures.ThreadPoolExecutor(max_worker=10) as executor:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+                futures = []
                 for fam_id in os.listdir(input_base):
                     input_dir = os.path.join(input_base, fam_id)
                     image_paths = get_onedir(input_dir)
@@ -256,8 +280,20 @@ def run():
                                                                 embedding_size, nrof_images, nrof_batches, emb_array,
                                                                 batch_size, image_paths)
                     sorted_clusters = cluster_facial_encodings(facial_encodings)
+                    sorted_clusters = data_cleaning(sorted_clusters, facial_encodings)
 
-                    executor.submit(zip_and_upload, sorted_clusters, fam_id)
+                    # For those families dont have enought photos for child, ignore them
+                    # Or those families use mitene in unordinary way.
+                    if len(sorted_clusters[0]) < discard_threshold:
+                        continue
+
+                    futures.append(executor.submit(zip_and_upload, sorted_clusters, fam_id))
+
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        print('job is finished!: ' + future.result())
+                    except Exception as e:
+                        print('zip and upload job failed!: ' + e)
 
 
 run()

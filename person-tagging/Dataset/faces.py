@@ -160,7 +160,7 @@ def _bbox_vote(det):
         return dets
     return None
 
-def _process(net, job, det_threshold=0.9, size_threshold=50):
+def _process(net, job, output_f, det_threshold=0.9, size_threshold=50):
     img_folder = '/home/ubuntu/images/' + job
     mvdir_des = '/home/ubuntu/images_backup/' + job
     output = '/home/ubuntu/faces/' + job
@@ -203,14 +203,13 @@ def _process(net, job, det_threshold=0.9, size_threshold=50):
                     img = original_img[ymin:ymax, xmin: xmax]
                     img = skimage.transform.resize(img, crop_size)
                     name, ext = os.path.splitext(os.path.basename(filename))
+                    output_f.write('{0}:{1},{2},{3},{4}\n'.format(name + '_' + str(i) + ext, xmin, ymin, xmax, ymax))
                     executor.submit(skimage.io.imsave, output + '/' + name + '_' + str(i) + ext, img)
-
-        print('Finished detection faces in family {0} with {1} seconds!'.format(job, time.time() - start_time))
 
     print('Finished detection faces in family {0} with {1} seconds!'.format(job, time.time() - start_time))
 
-    # copytree(img_folder, mvdir_des)
-    # rmtree(img_folder, ignore_errors=True)
+    copytree(img_folder, mvdir_des)
+    rmtree(img_folder, ignore_errors=True)
 
 
 def run():
@@ -225,8 +224,9 @@ def run():
     net.blobs['data'].reshape(1, 3, 640, 640)
     print('Network initialization finished! Start process jobs!')
 
-    for dir in os.listdir('/home/ubuntu/images'):
-        _process(net, dir)
+    with open('/home/ubuntu/face_list.txt', 'w') as output_f:
+        for dir in os.listdir('/home/ubuntu/images'):
+            _process(net, dir, output_f)
 
     print('Finished all faces! Shutdown server...')
 
