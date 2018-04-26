@@ -200,10 +200,9 @@ def get_onedir(paths):
 def zip_and_upload(sorted_clusters, fam_id):
     filename = os.path.join('/tmp/', fam_id + '.zip')
     with zipfile.ZipFile(filename, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-        for idx, cluster in enumerate(sorted_clusters):
-            for path in cluster:
-                write_path = os.path.join(fam_id, str(idx), os.path.basename(path))
-                zf.write(filename=path, arcname=write_path)
+        for path in sorted_clusters[0]:
+            write_path = os.path.join(fam_id, os.path.basename(path))
+            zf.write(filename=path, arcname=write_path)
 
     s3 = boto3.session.Session().resource('s3')
     s3.Bucket('mitene-deeplearning-dataset').upload_file(filename, 'faces/' + os.path.basename(filename))
@@ -293,7 +292,7 @@ def run():
                     try:
                         print('job is finished!: ' + future.result())
                     except Exception as e:
-                        print('zip and upload job failed!: ' + e)
+                        print('zip and upload job failed!: ' + str(e))
 
 
 run()
