@@ -34,9 +34,9 @@ def get_bbox_from_area(keypoints):
 
 
 # face_det_list is a list contains all face detection results for this family
-def process_one_family(fam_id, faces_det_list):
-    pose_folder = os.path.join('/home/ubuntu/pose', fam_id)
-    body_image_folder = os.path.join('/home/ubuntu/body', fam_id)
+def process_one_family(args, fam_id, faces_det_list):
+    pose_folder = os.path.join(args.pose_dir, fam_id)
+    body_image_folder = os.path.join(args.body_dir, fam_id)
     save_paths = []
 
     for pose_file in os.listdir(pose_folder):
@@ -74,16 +74,24 @@ def process_one_family(fam_id, faces_det_list):
     return fam_id
 
 
-def run():
+def process_one_family_pose(fam_id, pose_folder)
+    filename = os.path.join('/tmp', fam_id + '_pose.zip')
+    with zipfile.ZipFile(filename, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        for json_file in os.listdir(pose_folder):
+            zf.write(filename=os.path.join(pose_folder, json_file), arcname=os.path.join(fam_id, json_file))
+
+    s3 = boto3.session.Session().resource('s3')
+    s3.Bucket('mitene-deeplearning-dataset').upload_file(filename, 'body/' + os.path.basename(filename))
+    return fam_id
+
+def run(args):
     face_bbox_file = '/home/ubuntu/face_list.txt'
-    pose_folder = '/home/ubuntu/pose'
-    image_folder = '/home/ubuntu/images'
     uuid2famid = {}
     faces = {}
 
     # Setup uuid to fam_id dict
-    for fam_id in os.listdir(image_folder):
-        fam_folder = os.path.join(image_folder, fam_id)
+    for fam_id in os.listdir(args.image_dir):
+        fam_folder = os.path.join(args.image_dir, fam_id)
         for img_path in os.listdir(fam_folder):
             uuid2famid[os.path.splitext(img_path)[0]] = fam_id
 
@@ -109,8 +117,8 @@ def run():
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
         futures = []
-        for fam_id in os.listdir(pose_folder):
-            futures.append(executor.submit(process_one_family, fam_id, faces[fam_id]))
+        for fam_id in faces.keys():
+            futures.append(executor.submit(process_one_family, args, fam_id, faces[fam_id]))
 
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -118,4 +126,19 @@ def run():
             except Exception as e:
                 print('job failed for body image extraction! ' + str(e))
 
-run()
+        futures = []
+        for fam_id in os.listdir(args.pose_dir):
+            futures.append(executor.submit(process_one_family_pose, fam_id, os.path.join(args.pose_dir, fam_id)))
+
+
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser(description='Get a family photo input series (t-pose)')
+    parser.add_argument('--image_dir', type=str, help='input original image dir', required=True)
+    parser.add_argument('--pose_dir', type=str, help='input pose json dir', required=True)
+    parser.add_argument('--body_dir', type=str, help='output body image crop dir', required=True)
+    args = parser.parse_args()
+    return args
+
+
+run(parse_args())

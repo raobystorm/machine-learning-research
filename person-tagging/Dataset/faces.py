@@ -160,18 +160,17 @@ def _bbox_vote(det):
         return dets
     return None
 
-def _process(net, job, output_f, det_threshold=0.9, size_threshold=50):
-    img_folder = '/home/ubuntu/images/' + job
-    mvdir_des = '/home/ubuntu/images_backup/' + job
-    output = '/home/ubuntu/faces/' + job
 
-    if not os.path.exists(output):
-        os.makedirs(output)
+def _process(net, job_input, job_output, output_f, det_threshold=0.9, size_threshold=50):
+    # mvdir_des = os.path.join(args.backup, job)
 
-    print('Start loading imgs for family: ' + job)
+    if not os.path.exists(job_output):
+        os.makedirs(job_output)
+
+    print('Start loading imgs for: ' + job_input)
     start_time = time.time()
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-        img_files = [os.path.join(img_folder, img_name) for img_name in os.listdir(img_folder)]
+        img_files = [os.path.join(job_input, img_name) for img_name in os.listdir(job_input)]
         img_files = filter(lambda x: os.path.splitext(x)[1] in ImageTypes, img_files)
         future_to_filename = {executor.submit(_load_image, filename) : filename for filename in img_files}
         for future in concurrent.futures.as_completed(future_to_filename):
@@ -204,15 +203,15 @@ def _process(net, job, output_f, det_threshold=0.9, size_threshold=50):
                     img = skimage.transform.resize(img, crop_size)
                     name, ext = os.path.splitext(os.path.basename(filename))
                     output_f.write('{0}:{1},{2},{3},{4}\n'.format(name + '_' + str(i) + ext, xmin, ymin, xmax, ymax))
-                    executor.submit(skimage.io.imsave, output + '/' + name + '_' + str(i) + ext, img)
+                    executor.submit(skimage.io.imsave, os.path.join(job_output, name + '_' + str(i) + ext), img)
 
-    print('Finished detection faces in family {0} with {1} seconds!'.format(job, time.time() - start_time))
+    print('Finished detection faces in family {0} with {1} seconds!'.format(job_input, time.time() - start_time))
 
-    copytree(img_folder, mvdir_des)
-    rmtree(img_folder, ignore_errors=True)
+    # copytree(img_folder, mvdir_des)
+    # rmtree(img_folder, ignore_errors=True)
 
 
-def run():
+def run(args):
 
     caffe.set_mode_gpu()
     network = caffe_root + 'models/VGGNet/WIDER_FACE/SFD_trained/deploy.prototxt'
@@ -224,11 +223,32 @@ def run():
     net.blobs['data'].reshape(1, 3, 640, 640)
     print('Network initialization finished! Start process jobs!')
 
-    with open('/home/ubuntu/face_list.txt', 'w') as output_f:
-        for dir in os.listdir('/home/ubuntu/images'):
-            _process(net, dir, output_f)
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
+    with open(args.output + '/face_list.txt', 'w') as output_f:
+        for fam_id in os.listdir(args.input):
+            fam_input = os.path.join(args.input, fam_id)
+            fam_output = os.path.join(args.output, fam_id)
+            if not os.path.exists(fam_output):
+                os.makedirs(fam_output)
+
+            for job in os.listdir(fam_input):
+                job_output = os.path.join(fam_output, job)
+                if not os.path.exists(job_output):
+                    os.makedirs(job_output)
+                _process(net, os.path.join(fam_input, job), job_output, output_f)
 
     print('Finished all faces! Shutdown server...')
 
 
-run()
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser(description='Get a face input series (t-pose)')
+    parser.add_argument('--input', type=str, help='input dir', required=True)
+    parser.add_argument('--output', type=str, help='output dir', required=True)
+    args = parser.parse_args()
+    return args
+
+
+run(parse_args())
