@@ -58,7 +58,7 @@ def merge_best(graph, df, a, stop_condition, verbose=False, threshold=0):
     return max_score > threshold
 
 
-def cluster_encodings(encodings, children=1):
+def cluster_encodings(encodings, children=2):
     paths = []
     values = []
     for key, value in encodings.items():
@@ -66,7 +66,7 @@ def cluster_encodings(encodings, children=1):
         values.append(value)
     df = pd.DataFrame([v.transpose() for v in values])
     graph = knn_graph(df, 6, verbose=True)
-    graph = part_graph(graph, 2, df)
+    graph = part_graph(graph, children, df)
     # while merge_best(graph, df, 1, children, verbose=False):
     #     pass
 

@@ -161,7 +161,7 @@ def _bbox_vote(det):
     return None
 
 
-def _process(net, job_input, job_output, output_f, det_threshold=0.9, size_threshold=50):
+def _process(net, job_input, job_output, output_f, det_threshold=0.9, size_threshold=30):
     # mvdir_des = os.path.join(args.backup, job)
 
     if not os.path.exists(job_output):
@@ -247,6 +247,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Get a face input series (t-pose)')
     parser.add_argument('--input', type=str, help='input dir', required=True)
     parser.add_argument('--output', type=str, help='output dir', required=True)
+    parser.add_argument('--det_thres', type=int, help='size threshold for face detection', required=False)
     args = parser.parse_args()
     return args
 

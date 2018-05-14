@@ -11,6 +11,9 @@ import concurrent.futures
 import boto3
 import zipfile
 import shutil
+from chameleon import cluster_encodings
+from graphtools import euclidean_distance
+
 def face_distance(face_encodings, face_to_compare):
     """
     Given a list of face encodings, compare them to a known face encoding and get a euclidean distance
@@ -22,15 +25,11 @@ def face_distance(face_encodings, face_to_compare):
     if len(face_encodings) == 0:
         return np.empty((0))
 
-    #return 1/np.linalg.norm(face_encodings - face_to_compare, axis=1)
-    return np.sum(face_encodings*face_to_compare,axis=1)
+    return np.linalg.norm(face_encodings - face_to_compare, axis=1)
+    # return np.sum(face_encodings*face_to_compare,axis=1)
 
-def load_model(model_dir, meta_file, ckpt_file):
-    model_dir_exp = os.path.expanduser(model_dir)
-    saver = tf.train.import_meta_graph(os.path.join(model_dir_exp, meta_file))
-    saver.restore(tf.get_default_session(), os.path.join(model_dir_exp, ckpt_file))
 
-def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
+def _chinese_whispers(encoding_list, threshold, iterations=40):
     """ Chinese Whispers Algorithm
 
     Modified from Alex Loveless' implementation,
@@ -46,7 +45,7 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
             sorted by largest cluster to smallest
     """
 
-    #from face_recognition.api import _face_distance
+    # from face_recognition.api import _face_distance
     from random import shuffle
     import networkx as nx
     # Create graph
@@ -76,7 +75,7 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
         distances = face_distance(compare_encodings, face_encoding_to_check)
         encoding_edges = []
         for i, distance in enumerate(distances):
-            if distance > threshold:
+            if distance < threshold:
                 # Add edge if facial match
                 edge_id = idx+i+2
                 encoding_edges.append((node_id, edge_id, {'weight': distance}))
@@ -131,7 +130,8 @@ def _chinese_whispers(encoding_list, threshold=0.92, iterations=20):
 
     return sorted_clusters
 
-def cluster_facial_encodings(facial_encodings):
+
+def cluster_facial_encodings(facial_encodings, threshold=0.7):
     """ Cluster facial encodings
 
         Intended to be an optional switch for different clustering algorithms, as of right now
@@ -151,8 +151,14 @@ def cluster_facial_encodings(facial_encodings):
         return []
 
     # Only use the chinese whispers algorithm for now
-    sorted_clusters = _chinese_whispers(facial_encodings.items())
+    sorted_clusters = _chinese_whispers(facial_encodings.items(), threshold=threshold)
     return sorted_clusters
+
+
+def load_model(model_dir, meta_file, ckpt_file):
+    model_dir_exp = os.path.expanduser(model_dir)
+    saver = tf.train.import_meta_graph(os.path.join(model_dir_exp, meta_file))
+    saver.restore(tf.get_default_session(), os.path.join(model_dir_exp, ckpt_file))
 
 
 def compute_facial_encodings(sess,images_placeholder,embeddings,phase_train_placeholder,image_size,
@@ -211,19 +217,22 @@ def zip_and_upload(sorted_clusters, fam_id):
     return fam_id
 
 
-def data_cleaning(sorted_clusters, path_encodings):
-    first_cluster = sorted_clusters[0]
-    first_cluster_paths = filter(lambda x: x in first_cluster, path_encodings.keys())
-    first_cluster_encodings = [path_encodings[x] for x in first_cluster_paths]
-    first_cluster_center = np.mean(first_cluster_encodings, axis=0)
+def compute_cluster_center(cluster, face_encodings):
+    cluster_paths = filter(lambda x: x in cluster, face_encodings.keys())
+    cluster_encodings = [face_encodings[x] for x in cluster_paths]
+    return np.mean(cluster_encodings, axis=0)
 
-    for path in first_cluster:
+
+def data_cleaning(sorted_clusters, face_encodings):
+    first_cluster_center = compute_cluster_center(sorted_clusters[0], face_encodings)
+
+    for path in sorted_clusters[0]:
         uuid = os.path.basename(path).split('_')[0]
-        paths_with_uuid = list(filter(lambda x: uuid in x, first_cluster))
+        paths_with_uuid = list(filter(lambda x: uuid in x, sorted_clusters[0]))
         if len(paths_with_uuid) > 1:
             max_dis = 0
             for path in paths_with_uuid:
-                distance = np.sum(path_encodings[path]*first_cluster_center)
+                distance = np.sum(face_encodings[path]*first_cluster_center)
                 if distance > max_dis:
                     max_dis = distance
                     max_path = path
@@ -235,7 +244,39 @@ def data_cleaning(sorted_clusters, path_encodings):
     return sorted_clusters
 
 
-def run(args):
+def sort_dirs(fam_input, jobs):
+    jobs = list(filter(lambda x: os.path.isdir(os.path.join(fam_input, x)), jobs))
+    jobs = list(map(lambda x: int(x), jobs))
+    jobs.sort()
+    return list(map(lambda x: str(x), jobs))
+
+
+def save_one_cluster(output, cluster):
+    cluster_dir = os.path.join(output)
+    if not os.path.exists(cluster_dir):
+        os.makedirs(cluster_dir)
+    for path in cluster:
+        shutil.copy(path, os.path.join(cluster_dir, os.path.basename(path)))
+    return output
+
+
+def reorder_according_to_cluster_center(cluster_centers, facial_encodings, sorted_clusters):
+    encoding_centers = [compute_cluster_center(cluster, facial_encodings) for cluster in sorted_clusters]
+    reorder = []
+    for center in cluster_centers:
+        min_dis = 99999
+        min_idx = 99999
+        for idx, encoding in enumerate(encoding_centers):
+            if idx in reorder:
+                continue
+            dis = np.mean(euclidean_distance(center, encoding))
+            if dis < min_dis:
+                min_dis = dis
+                min_idx = idx
+        reorder.append(min_idx)
+    return [list(sorted_clusters)[i] for i in reorder]
+
+def run(fam_input, fam_output, children):
     """ Main
 
     Given a list of images, save out facial encoding data files and copy
@@ -245,8 +286,12 @@ def run(args):
     import numpy as np
 
     batch_size = 500
-    discard_threshold = 50
     model_dir = '/home/ubuntu/FaceNet/20170512-110547'
+
+    if os.path.exists(fam_output):
+        shutil.rmtree(fam_output)
+
+    os.mkdir(fam_output)
 
     with tf.Graph().as_default():
         with tf.Session() as sess:
@@ -257,49 +302,69 @@ def run(args):
             print('Checkpoint file: %s' % ckpt_file)
             load_model(model_dir, meta_file, ckpt_file)
 
-            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
-                for fam_id in os.listdir(args.input):
-                    if not os.path.isdir(os.path.join(args.input, fam_id)):
-                        continue
-                    fam_input = os.path.join(args.input, fam_id)
-                    fam_output = os.path.join(args.output, fam_id)
-                    if not os.path.exists(fam_output):
-                        os.makedirs(fam_output)
-
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                cluster_centers = []
+                for job in sort_dirs(fam_input, os.listdir(fam_input)):
                     futures = []
-                    for job in os.listdir(fam_input):
-                        input_dir = os.path.join(fam_input, job)
-                        image_paths = get_onedir(input_dir)
-                        # image_list, label_list = facenet.get_image_paths_and_labels(train_set)
+                    input_dir = os.path.join(fam_input, job)
+                    image_paths = get_onedir(input_dir)
+                    # image_list, label_list = facenet.get_image_paths_and_labels(train_set)
 
-                        # Get input and output tensors
-                        images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-                        embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-                        phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+                    # Get input and output tensors
+                    images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
+                    embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
+                    phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
 
-                        image_size = images_placeholder.get_shape()[1]
-                        embedding_size = embeddings.get_shape()[1]
+                    image_size = images_placeholder.get_shape()[1]
+                    embedding_size = embeddings.get_shape()[1]
 
-                        nrof_images = len(image_paths)
-                        nrof_batches = int(math.ceil(1.0 * nrof_images / batch_size))
-                        emb_array = np.zeros((nrof_images, embedding_size))
-                        facial_encodings = compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_placeholder,
-                                                                    image_size,
-                                                                    embedding_size, nrof_images, nrof_batches, emb_array,
-                                                                    batch_size, image_paths)
-                        sorted_clusters = cluster_facial_encodings(facial_encodings)
+                    nrof_images = len(image_paths)
+                    nrof_batches = int(math.ceil(1.0 * nrof_images / batch_size))
+                    emb_array = np.zeros((nrof_images, embedding_size))
+                    facial_encodings = compute_facial_encodings(sess, images_placeholder, embeddings, phase_train_placeholder,
+                                                                image_size,
+                                                                embedding_size, nrof_images, nrof_batches, emb_array,
+                                                                batch_size, image_paths)
+
+                    # print('Start zip upload for: ' + str(fam_id))
+                    # futures.append(executor.submit(zip_and_upload, sorted_clusters, fam_id))
+
+                    if children > 1:
+                        sorted_clusters = cluster_facial_encodings(facial_encodings, threshold=0.6)
+                        if not sorted_clusters:
+                            continue
+
+                        facial_encodings = {k: v for k, v in facial_encodings.items() if k in sorted_clusters[0]}
+                        # if there is very few images in these 3 months
+                        if len(facial_encodings) < 10:
+                            continue
+
+                        # from sklearn.cluster import AgglomerativeClustering
+                        # result = AgglomerativeClustering(n_clusters=children).fit(np.array(list(facial_encodings.values())))
+                        # sorted_clusters = {}
+                        # for idx, path in enumerate(facial_encodings.keys()):
+                        #     cluster = result.labels_[idx]
+                        #     if cluster not in sorted_clusters:
+                        #         sorted_clusters[cluster] = []
+                        #     sorted_clusters[cluster].append(path)
+                        # sorted_clusters = sorted_clusters.values()
+
+                        sorted_clusters = cluster_encodings(facial_encodings, children)
+                        # reorder according to last 3 months cluster centers.
+                        if cluster_centers:
+                            sorted_clusters = reorder_according_to_cluster_center(cluster_centers, facial_encodings, sorted_clusters)
+                        # only update cluster centers for those months have enough clusters for children
+                        if len(sorted_clusters) == children:
+                            cluster_centers = [compute_cluster_center(cluster, facial_encodings) for cluster in sorted_clusters]
+                        for idx, cluster in enumerate(sorted_clusters):
+                            futures.append(executor.submit(save_one_cluster, os.path.join(fam_output, job, str(idx)), cluster))
+                    else:
+                        sorted_clusters = cluster_facial_encodings(facial_encodings, threshold=0.55)
                         if not sorted_clusters:
                             continue
 
                         sorted_clusters = data_cleaning(sorted_clusters, facial_encodings)
-
-                        # For those families dont have enought photos for child, ignore them
-                        # Or those families use mitene in unordinary way.
-                        if len(sorted_clusters[0]) < discard_threshold:
-                            continue
-
-                        print('Start zip upload for: ' + str(fam_id))
-                        futures.append(executor.submit(zip_and_upload, sorted_clusters, fam_id))
+                        futures.append(executor.submit(save_one_cluster, os.path.join(fam_output, job, str(0)), sorted_clusters[0]))
 
                     for future in concurrent.futures.as_completed(futures):
                         try:
@@ -307,14 +372,14 @@ def run(args):
                         except Exception as e:
                             print('zip and upload job failed!: ' + str(e))
 
-
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser(description='Get a face input series (t-pose)')
     parser.add_argument('--input', type=str, help='input dir', required=True)
     parser.add_argument('--output', type=str, help='output dir', required=True)
+    parser.add_argument('--children', type=int, help='children count for family', required=True)
     args = parser.parse_args()
     return args
 
-
-run(parse_args())
+args = parse_args()
+run(args.input, args.output, args.children)
